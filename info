@@ -1,0 +1,13 @@
+https://medium.com/@m_ko/how-to-run-python-scripts-as-a-windows-service-979082706360
+
+nssm install "AIS Data Collector" "C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe" "D:\AIS Data Collector\main.py"
+
+nssm set "AIS Data Collector" AppStdout "D:\AIS Data Collector\logs\stdout.log"
+nssm set "AIS Data Collector" AppStderr "D:\AIS Data Collector\logs\stderr.log"
+
+nssm start "AIS Data Collector"
+nssm edit "AIS Data Collector"
+nssm remove "AIS Data Collector"
+
+* issues didnt have permissions to run pythhon since its in AppData
+* when working directory is specified (using nssm edit) you do not need the absolute path to the script

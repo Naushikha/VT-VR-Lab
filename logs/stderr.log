@@ -1,0 +1,9 @@
+C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe: can't open file "D:\\AIS Data Collector\\'D:\\AIS": [Errno 22] Invalid argument
+C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe: can't open file "D:\\AIS Data Collector\\'D:\\AIS": [Errno 22] Invalid argument
+C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe: can't open file "D:\\AIS Data Collector\\'D:\\AIS": [Errno 22] Invalid argument
+C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe: can't open file "D:\\AIS Data Collector\\'D:\\AIS": [Errno 22] Invalid argument
+C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\python.exe: can't open file "D:\\AIS Data Collector\\'D:\\AIS": [Errno 22] Invalid argument
+Traceback (most recent call last):
+  File "D:\AIS Data Collector\main.py", line 24, in <module>
+    aisMessage += aisMessageByte.decode("ascii")
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xc6 in position 0: ordinal not in range(128)
