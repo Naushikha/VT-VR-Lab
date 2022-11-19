@@ -38,12 +38,6 @@ end
 MMSI = ship1(1, 2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Motion prediction data
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-k_p = 2; % start sample
-tfinal = 30; % duration in seconds
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Measurements
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 t = round_n(ship1(:, 1), 2);
@@ -99,6 +93,7 @@ for i = 1:M - 1
         X_hat = X_prd + K * eps;
         P_hat = (eye(4) - K) * P_prd * (eye(4) - K)' + K * R * K';
 
+        % Make sure not to exceed the number of samples available
         if k < N
             k = k + 1;
             t_update = t(k);
@@ -107,18 +102,22 @@ for i = 1:M - 1
     end
 
     % Store simulation data in a table
-    simdata(i, :) = [time X_prd' P_prd(1, 1) P_prd(2, 2)];
+    simdata(i, :) = [ time X_prd' P_prd(1, 1) P_prd(2, 2) ];
 
     % Predictor (k+1)
-    f_hat = [X_hat(3) * cos(X_hat(4))
+    f_hat = [
+        X_hat(3) * cos(X_hat(4))
         X_hat(3) * sin(X_hat(4))
         0
-        0];
+        0
+    ]; % column vector
 
-    A = [0 0 cos(X_hat(4)) -X_hat(3) * sin(X_hat(4))
+    A = [
+        0 0 cos(X_hat(4)) -X_hat(3) * sin(X_hat(4))
         0 0 sin(X_hat(4)) X_hat(3) * cos(X_hat(4))
         0 0 0 0
-        0 0 0 0];
+        0 0 0 0
+        ];
 
     PHI = eye(4) + A * h;
     X_prd = X_hat + h * f_hat;
