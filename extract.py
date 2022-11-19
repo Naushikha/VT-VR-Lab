@@ -55,7 +55,8 @@ def customFilter(msg):
 
 
 # Default filter (positional reports only) >> Custom filter
-filteredAIS = utils.filter(utils.filter(AISMessages), customFilter)
+filteredAIS = utils.filter(AISMessages)
+filteredAIS = utils.filter(filteredAIS, customFilter)
 
 
 # utils.printMapBounds(filteredAIS)

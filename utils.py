@@ -22,7 +22,8 @@ def printTimeDifferenceList(msgDictList):
     for msg in msgDictList:
         prevTime = currTime
         currTime = int(msg["epoch_time"])
-        print(currTime - prevTime)
+        delta = currTime - prevTime
+        print(delta)
 
 
 def printVesselList(msgDictList):
