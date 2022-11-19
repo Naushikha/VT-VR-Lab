@@ -41,7 +41,7 @@ MMSI = ship1(1, 2);
 % Measurements
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 t = round_n(ship1(:, 1), 2);
-t = t - t(1); % makes time relative to the first time entry
+t = t - t(1); % make time relative to the first time entry
 x = ship1(:, 3);
 y = ship1(:, 4);
 U = ship1(:, 5) * 0.514444; % knots to m/s
@@ -102,7 +102,7 @@ for i = 1:M - 1
     end
 
     % Store simulation data in a table
-    simdata(i, :) = [ time X_prd' P_prd(1, 1) P_prd(2, 2) ];
+    simdata(i, :) = [time X_prd' P_prd(1, 1) P_prd(2, 2)];
 
     % Predictor (k+1)
     f_hat = [
@@ -110,7 +110,7 @@ for i = 1:M - 1
         X_hat(3) * sin(X_hat(4))
         0
         0
-    ]; % column vector
+        ]; % column vector
 
     A = [
         0 0 cos(X_hat(4)) -X_hat(3) * sin(X_hat(4))
@@ -164,4 +164,4 @@ subplot(414)
 plot(t, y, 'o', t_prd, y_prd, 'r', 'LineWidth', 1), grid, title('y [km]');
 set (gca, 'fontsize', 12)
 
-waitfor(gcf)# Prevents the script from closing
+waitfor(gcf); # Prevents the script from closing

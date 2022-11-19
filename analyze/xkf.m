@@ -216,25 +216,6 @@ for i = 1:M - 1
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Motion prediction from time t(k_p)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-x_p(1) = x(k_p);
-y_p(1) = y(k_p);
-U_p(1) = U(k_p);
-chi_p(1) = chi(k_p);
-
-dt = t(k_p) - t(k_p -1);
-a = (U(k_p) - U(k_p -1)) / dt;
-r = wrapToPi (chi(k_p) - chi(k_p -1)) / dt;
-
-for i = 1:tfinal / h_p
-    x_p(i + 1) = x_p(i) + h_p * U_p(i) * cos(chi_p(i));
-    y_p(i + 1) = y_p(i) + h_p * U_p(i) * sin(chi_p(i));
-    U_p(i + 1) = U_p(i) + h_p * a;
-    chi_p(i + 1) = chi_p(i) + h_p * r;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PLOT SIMULATION DATA: x = [x y U chi] AND PREDICTED SHIP
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 t_prd = simdata(:, 1);
@@ -253,34 +234,19 @@ r_hat = simdata(:, 11);
 
 x = x / 1000;
 y = y / 1000;
-x_p = x_p / 1000;
-y_p = y_p / 1000;
 
 figure(1)
-xship = [-1, 1/3, 1/3, 1, 1/3, 1/3, -1]; % draw ship
-yship = [-1/3, -1/3, -1/3, 0, 1/3, 1/3, 1/3];
 
-g1 = hgtransform;
-g2 = hgtransform;
-patch('XData', xship, 'YData', yship, 'FaceColor', 'black', 'Parent', g1);
-patch('XData', xship, 'YData', yship, 'FaceColor', 'black', 'Parent', g2);
-
-hold on
+hold on;
 plot(y, x, 'bo', y_prd, x_prd, 'r', 'LineWidth', 1);
 plot(y_hat, x_hat, 'c', 'LineWidth', 1);
-%plot(y(k_p),x(k_p),'rp ','MarkerSize ' ,30);
-hold off; grid
+% plot(y(k_p),x(k_p),'rp','MarkerSize' ,30);
+hold off;
+grid;
 
 set(gca, 'fontsize', 12)
 xlabel('y [km]'); ylabel('x [km]')
 title('xy-plot: Kinematic observer (red) and XKF (cyan)')
-
-hold on
-quiver(y_p(1), x_p(1), y_p(tfinal / h_p) - y_p(1), x_p(tfinal / h_p) - x_p(1), 1, 'g', 'LineWidth', 5)
-% g1.Matrix = makehgtform('translate', [y_p(1),x_p(1),0], 'scale',0.6, 'zrotate',pi/2-chi_p(1));
-% g2.Matrix = makehgtform('translate', [y_p(tfinal/h_p),x_p(tfinal/h_p),0], 'scale',0.6, 'zrotate',pi/2-chi_p(tfinal/h_p));
-drawnow
-hold off
 
 figure(2)
 subplot(611)
@@ -301,4 +267,4 @@ subplot(616)
 plot(t_prd, r_hat * 180 / pi, 'b', 'LineWidth', 1), grid, title('r [deg/s]');
 set(gca, 'fontsize', 12)
 
-waitfor(gcf)
+waitfor(gcf); # Prevents the script from closing
