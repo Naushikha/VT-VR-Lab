@@ -44,8 +44,8 @@ def writeCSVForOctave(msgDictList, fileName=defaultFileName):
         singleRecord = [
             msg["epoch_time"],
             msg["mmsi"],
-            utils.computeFlatX(float(msg["lon"])),
-            utils.computeFlatY(float(msg["lat"])),
+            utils.approximateFlatX(float(msg["lon"])),
+            utils.approximateFlatY(float(msg["lat"])),
             msg["speed"],
             msg["course"],
         ]
