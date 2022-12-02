@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 import utils
 
-defaultFileName = datetime.now().strftime("%Y_%m_%d-%H_%M")
+defaultFileName = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
 # Format messages for Unreal: ID, Timestamp, MMSI, Latitude, Longitude, Speed, Course, Heading
 def writeCSVForUnreal(msgDictList, fileName=defaultFileName):
