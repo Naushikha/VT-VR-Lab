@@ -38,16 +38,6 @@ end
 MMSI = ship1(1, 2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Motion prediction data
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-h_p = 0.1; % 10 Hz plots
-
-kmax = length(ship1);
-
-k_p = 2; % round(kmax /2);% start sample k_p < k_max
-tfinal = 30; % duration in seconds
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Measurements
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -143,7 +133,7 @@ for i = 1:M - 1
             r_c = 0;
         end
 
-        % max values ( saturation ) to avoid estimates using wildpoints
+        % max values (saturation) to avoid estimates using wildpoints
         r_max = pi / 180;
 
         if r_c > r_max
@@ -161,7 +151,7 @@ for i = 1:M - 1
             a_c = -a_max;
         end
 
-        % Corrector Kalman tilter ( update states if new measurement )
+        % Corrector Kalman filter (update states if new measurement)
         z_k = [x_k y_k U_k chi_k]';
         eps = z_k - H * x_hat;
         eps(4) = wrapToPi(eps(4));
@@ -171,9 +161,9 @@ for i = 1:M - 1
 
         % Corrector kinematic observer (update states if new measurement)
         x_prd = x_prd + h * K1 * (x_k - x_prd);
-        y_prd - y_prd + h * K2 * (y_k - y_prd);
+        y_prd = y_prd + h * K2 * (y_k - y_prd);
         U_prd = U_prd + h * K3 * (U_k - U_prd);
-        chi_prd = chi_prd + h * K4 * wrapToPi (chi_k - chi_prd);
+        chi_prd = chi_prd + h * K4 * wrapToPi(chi_k - chi_prd);
 
         if k < N
             k = k + 1;
@@ -240,7 +230,6 @@ figure(1)
 hold on;
 plot(y, x, 'bo', y_prd, x_prd, 'r', 'LineWidth', 1);
 plot(y_hat, x_hat, 'c', 'LineWidth', 1);
-% plot(y(k_p),x(k_p),'rp','MarkerSize' ,30);
 hold off;
 grid;
 
