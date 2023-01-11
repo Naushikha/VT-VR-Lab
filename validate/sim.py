@@ -57,8 +57,6 @@ print("Reporting Interval:", getAISReportingIntervalBySpeed(speedKnots))
 
 aisT = np.arange(
     0, time, getAISReportingIntervalBySpeed(speedKnots))  # in seconds
-
-aisT = []  # in seconds
 aisX = []  # in meters
 aisY = []  # in meters
 aisH = []  # in degrees
@@ -69,8 +67,42 @@ for reportingTime in aisT:
     aisY.append(tY)
     aisH.append(tH)
 
+
+def dead_reckoning():
+    freq = 60  # Hertz
+    aT = np.arange(0, time, 1 / freq)
+    aX = []
+    aY = []
+    k = 0
+    lSpeed = speed
+    lCourse = 0
+    for deltaAT in aT:
+        if (deltaAT >= aisT[k]):
+            aX.append(aisX[k])
+            aY.append(aisY[k])
+            lSpeed = speed
+            lCourse = aisH[k]
+            if (k < len(aisT)-1):
+                k += 1
+            else:
+                break
+        else:
+            aX.append(aX[-1] + lSpeed *
+                      math.sin(math.radians(lCourse)) * (1 / freq))
+            aY.append(aY[-1] + lSpeed *
+                      math.cos(math.radians(lCourse)) * (1 / freq))
+    return [aX, aY]
+
+
+def plot_algo(algo="DR"):
+    if (algo == "DR"):
+        aX, aY = dead_reckoning()
+    plt.plot(aX, aY, 'g')
+
+
 plt.plot(X, Y)
 plt.plot(aisX, aisY, 'ro')
+plot_algo()
 
 plt.title('AIS Vessel Motion Simulator')
 plt.xlabel('X-Axis (m)')
