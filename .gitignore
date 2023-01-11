@@ -161,8 +161,8 @@ cython_debug/
 
 ############################
 
-!out/.gitkeep
 out/*
+!out/.gitkeep
 
-!img/.gitkeep
 img/*
+!img/.gitkeep
