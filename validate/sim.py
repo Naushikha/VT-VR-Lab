@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from algo.dr import dead_reckoning
 
 X = np.linspace(0, 100, 1000)  # in meters
 Y = []
@@ -59,44 +60,28 @@ aisT = np.arange(
     0, time, getAISReportingIntervalBySpeed(speedKnots))  # in seconds
 aisX = []  # in meters
 aisY = []  # in meters
-aisH = []  # in degrees
+aisC = []  # in degrees
+aisS = np.repeat(speed, len(aisT))  # in ms-1
 
 for reportingTime in aisT:
     tX, tY, tH = getAISDataByDist(reportingTime * speed)
     aisX.append(tX)
     aisY.append(tY)
-    aisH.append(tH)
+    aisC.append(tH)
 
-
-def dead_reckoning():
-    freq = 60  # Hertz
-    aT = np.arange(0, time, 1 / freq)
-    aX = []
-    aY = []
-    k = 0
-    lSpeed = speed
-    lCourse = 0
-    for deltaAT in aT:
-        if (deltaAT >= aisT[k]):
-            aX.append(aisX[k])
-            aY.append(aisY[k])
-            lSpeed = speed
-            lCourse = aisH[k]
-            if (k < len(aisT)-1):
-                k += 1
-            else:
-                break
-        else:
-            aX.append(aX[-1] + lSpeed *
-                      math.sin(math.radians(lCourse)) * (1 / freq))
-            aY.append(aY[-1] + lSpeed *
-                      math.cos(math.radians(lCourse)) * (1 / freq))
-    return [aX, aY]
+aisData = {
+    "time": aisT,
+    "x": aisX,
+    "y": aisY,
+    "course": aisC,
+    "speed": aisS,
+    "duration": time
+}
 
 
 def plot_algo(algo="DR"):
     if (algo == "DR"):
-        aX, aY = dead_reckoning()
+        aX, aY = dead_reckoning(aisData)
     plt.plot(aX, aY, 'g')
 
 
