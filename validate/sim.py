@@ -82,13 +82,18 @@ aisData = {
 def plot_algo(algo="DR"):
     if (algo == "DR"):
         aX, aY = dead_reckoning(aisData)
-    plt.plot(aX, aY, 'g')
+    plt.plot(aX, aY)
 
 
 plt.plot(X, Y)
 plt.plot(aisX, aisY, 'ro')
 plot_algo()
 
+algoList = ['Dead Reckoning']
+legendList = ['True Path', 'AIS Report']
+legendList.extend(algoList)
+
+plt.legend(legendList)
 plt.title('AIS Vessel Motion Simulator')
 plt.xlabel('X-Axis (m)')
 plt.ylabel('Y-Axis (m)')
