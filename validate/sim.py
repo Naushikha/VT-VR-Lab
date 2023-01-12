@@ -2,6 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from algo.dr import dead_reckoning
+from algo.ekf import extended_kalman
 
 X = np.linspace(0, 100, 1000)  # in meters
 Y = []
@@ -82,14 +83,17 @@ aisData = {
 def plot_algo(algo="DR"):
     if (algo == "DR"):
         aX, aY = dead_reckoning(aisData)
+    if (algo == "EKF"):
+        aX, aY = extended_kalman(aisData)
     plt.plot(aX, aY)
 
 
 plt.plot(X, Y)
 plt.plot(aisX, aisY, 'ro')
-plot_algo()
+plot_algo("DR")
+plot_algo("EKF")
 
-algoList = ['Dead Reckoning']
+algoList = ['Dead Reckoning', 'Extended Kalman Filter']
 legendList = ['True Path', 'AIS Report']
 legendList.extend(algoList)
 
