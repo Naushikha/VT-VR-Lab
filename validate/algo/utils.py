@@ -21,3 +21,10 @@ def computeFossenChi(aisData):
 def wrapToPi(angle):
     return (angle + np.pi) % (2 * np.pi) - np.pi
     # https://stackoverflow.com/a/15927914
+
+
+def fixCourse(aisData):
+    correctedCourse = []
+    for course in aisData["course"]:
+        correctedCourse.append(-wrapToPi(math.radians(course) - np.pi/2))
+    return correctedCourse

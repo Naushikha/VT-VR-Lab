@@ -1,7 +1,7 @@
 import math
 import copy
 import numpy as np
-from .utils import computeFossenChi, wrapToPi
+from .utils import computeFossenChi, wrapToPi, fixCourse
 
 
 def extended_kalman(aisData):
@@ -13,7 +13,8 @@ def extended_kalman(aisData):
     aX = []
     aY = []
     k = 0
-    aisData["course"] = computeFossenChi(aisData)  # in Radians
+    # aisData["course"] = computeFossenChi(aisData)  # in Radians
+    aisData["course"] = fixCourse(aisData)  # in Radians
     # Initialization of EKF: X = [x y U chi]
     Q = np.diag([0.01, 0.01, 0.1, 0.1])
     R = np.diag([0.001, 0.001, 0.001, 0.01])

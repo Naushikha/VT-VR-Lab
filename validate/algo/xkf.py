@@ -1,7 +1,7 @@
 import math
 import copy
 import numpy as np
-from .utils import computeFossenChi, wrapToPi
+from .utils import computeFossenChi, wrapToPi, fixCourse
 
 
 def exogenous_kalman(aisData):
@@ -13,7 +13,8 @@ def exogenous_kalman(aisData):
     aX = []
     aY = []
     k = 0
-    aisData["course"] = computeFossenChi(aisData)  # in Radians
+    # aisData["course"] = computeFossenChi(aisData)  # in Radians
+    aisData["course"] = fixCourse(aisData)  # in Radians
 
     # Initialization of kinematic observer: x = [x y U chi]
 
