@@ -11,7 +11,7 @@ def computeFossenChi(aisData):
     prevY = 0
     correctedChi = []
     for i in range(len(aisData["time"])):
-        newChi = math.atan2((aisData["y"][i]-prevY), (aisData["x"][i]-prevX))
+        newChi = math.atan2((aisData["y"][i] - prevY), (aisData["x"][i] - prevX))
         correctedChi.append(newChi)
         prevX = aisData["x"][i]
         prevY = aisData["y"][i]
@@ -26,5 +26,5 @@ def wrapToPi(angle):
 def fixCourse(aisData):
     correctedCourse = []
     for course in aisData["course"]:
-        correctedCourse.append(-wrapToPi(math.radians(course) - np.pi/2))
+        correctedCourse.append(-wrapToPi(math.radians(course) - np.pi / 2))
     return correctedCourse

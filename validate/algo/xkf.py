@@ -40,12 +40,14 @@ def exogenous_kalman(aisData):
     T_a = 10  # acceleration time constant
     T_r = 50  # yaw rate time constant
 
-    B = np.matrix([
-        [0, 0],
-        [0, 0],
-        [1, 0],
-        [0, 1],
-    ])
+    B = np.matrix(
+        [
+            [0, 0],
+            [0, 0],
+            [1, 0],
+            [0, 1],
+        ]
+    )
 
     H = np.eye(4)
 
@@ -56,7 +58,7 @@ def exogenous_kalman(aisData):
         aY.append(x_hat.item(1))
 
         # Measurements
-        if (deltaAT >= aisData["time"][k]):
+        if deltaAT >= aisData["time"][k]:
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -68,14 +70,22 @@ def exogenous_kalman(aisData):
                 h2 = aisData["time"][k - 1] - aisData["time"][k - 2]
                 alp = ((h1 + h2) / h1) ** 2
 
-                if ((h1 + h2) / 2 > 4):  # do not compute a and r if mean sampling time > 4s
+                if (
+                    h1 + h2
+                ) / 2 > 4:  # do not compute a and r if mean sampling time > 4s
                     a_c = 0
                     r_c = 0
                 else:
-                    a_c = ((1 - alp) * aisData["speed"][k] + alp * aisData["speed"][k - 1] -
-                           aisData["speed"][k - 2]) / ((1 - alp) * h1 + h2)
-                    r_c = ((1 - alp) * aisData["course"][k] + alp * aisData["course"][k - 1] -
-                           aisData["course"][k - 2]) / ((1 - alp) * h1 + h2)
+                    a_c = (
+                        (1 - alp) * aisData["speed"][k]
+                        + alp * aisData["speed"][k - 1]
+                        - aisData["speed"][k - 2]
+                    ) / ((1 - alp) * h1 + h2)
+                    r_c = (
+                        (1 - alp) * aisData["course"][k]
+                        + alp * aisData["course"][k - 1]
+                        - aisData["course"][k - 2]
+                    ) / ((1 - alp) * h1 + h2)
             else:  # zero for first two data points
                 a_c = 0
                 r_c = 0
@@ -83,17 +93,17 @@ def exogenous_kalman(aisData):
             # max values (saturation) to avoid estimates using wildpoints
             r_max = np.pi / 180
 
-            if (r_c > r_max):
+            if r_c > r_max:
                 r_c = r_max
-            elif (r < -r_max):
+            elif r < -r_max:
                 r_c = -r_max
 
             # max values
             a_max = 1
 
-            if (a_c > a_max):
+            if a_c > a_max:
                 a_c = a_max
-            elif (a_c < -a_max):
+            elif a_c < -a_max:
                 a_c = -a_max
 
             # Corrector Kalman filter (update states if new measurement)
@@ -110,34 +120,45 @@ def exogenous_kalman(aisData):
             U_prd = U_prd + h * K3 * (U_k - U_prd)
             chi_prd = chi_prd + h * K4 * wrapToPi(chi_k - chi_prd)
 
-            if (k < len(aisData["time"])-1):
+            if k < len(aisData["time"]) - 1:
                 k += 1
             else:
                 break
 
         # Kalman filter model
         X_prd = np.matrix([x_prd, y_prd, U_prd, chi_prd]).T
-        f_prd = np.matrix([
-            X_prd.item(2) * math.cos(X_prd.item(3)),
-            X_prd.item(2) * math.sin(X_prd.item(3)),
-            0,
-            0,
-        ]).T
+        f_prd = np.matrix(
+            [
+                X_prd.item(2) * math.cos(X_prd.item(3)),
+                X_prd.item(2) * math.sin(X_prd.item(3)),
+                0,
+                0,
+            ]
+        ).T
 
-        F = np.matrix([
-            [0, 0, math.cos(X_prd.item(3)), - X_prd.item(2)
-             * math.sin(X_prd.item(3))],
-            [0, 0, math.sin(X_prd.item(3)), X_prd.item(2)
-             * math.cos(X_prd.item(3))],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-        ]).T
+        F = np.matrix(
+            [
+                [
+                    0,
+                    0,
+                    math.cos(X_prd.item(3)),
+                    -X_prd.item(2) * math.sin(X_prd.item(3)),
+                ],
+                [
+                    0,
+                    0,
+                    math.sin(X_prd.item(3)),
+                    X_prd.item(2) * math.cos(X_prd.item(3)),
+                ],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ]
+        ).T
 
         PHI = np.eye(4) + h * F
 
         # Predictor Kalman filter (k+1)
-        x_hat = x_hat + h * (f_prd + F * (x_hat - X_prd) +
-                             B * np.matrix([a, r]).T)
+        x_hat = x_hat + h * (f_prd + F * (x_hat - X_prd) + B * np.matrix([a, r]).T)
         x_hat.itemset(3, wrapToPi(x_hat.item(3)))
         P = PHI * P * PHI.T + Q
 

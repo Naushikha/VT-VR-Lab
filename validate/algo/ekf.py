@@ -18,8 +18,9 @@ def extended_kalman(aisData):
     # Initialization of EKF: X = [x y U chi]
     Q = np.diag([0.01, 0.01, 0.1, 0.1])
     R = np.diag([0.001, 0.001, 0.001, 0.01])
-    X_prd = np.matrix([aisData["x"][0], aisData["y"][0],
-                       aisData["speed"][0], aisData["course"][0]]).T
+    X_prd = np.matrix(
+        [aisData["x"][0], aisData["y"][0], aisData["speed"][0], aisData["course"][0]]
+    ).T
     P_prd = 0.1 * np.eye(4)
 
     for deltaAT in aT:
@@ -29,7 +30,7 @@ def extended_kalman(aisData):
         P_hat = P_prd
 
         # Measurements
-        if (deltaAT >= aisData["time"][k]):
+        if deltaAT >= aisData["time"][k]:
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -40,12 +41,12 @@ def extended_kalman(aisData):
             eps.itemset(3, wrapToPi(eps.item(3)))
 
             # Corrector
-            K = P_prd * np.matrix(P_prd + R, dtype='float').I
+            K = P_prd * np.matrix(P_prd + R, dtype="float").I
 
             X_hat = X_prd + K * eps
             P_hat = (np.eye(4) - K) * P_prd * (np.eye(4) - K).T + K * R * K.T
 
-            if (k < len(aisData["time"])-1):
+            if k < len(aisData["time"]) - 1:
                 k += 1
             else:
                 break
@@ -55,17 +56,32 @@ def extended_kalman(aisData):
         aY.append(X_prd.item(1))
 
         # Predictor (k+1)
-        f_hat = np.matrix([X_hat.item(2) * math.cos(X_hat.item(3)),
-                          X_hat.item(2) * math.sin(X_hat.item(3)),
-                          0,
-                          0]).T
+        f_hat = np.matrix(
+            [
+                X_hat.item(2) * math.cos(X_hat.item(3)),
+                X_hat.item(2) * math.sin(X_hat.item(3)),
+                0,
+                0,
+            ]
+        ).T
         A = np.matrix(
-            [[0, 0, math.cos(X_hat.item(3)), -X_hat.item(2) * math.sin(X_hat.item(3))],
-             [0, 0, math.sin(X_hat.item(3)), X_hat.item(2)
-              * math.cos(X_hat.item(3))],
-             [0, 0, 0, 0],
-             [0, 0, 0, 0],
-             ])
+            [
+                [
+                    0,
+                    0,
+                    math.cos(X_hat.item(3)),
+                    -X_hat.item(2) * math.sin(X_hat.item(3)),
+                ],
+                [
+                    0,
+                    0,
+                    math.sin(X_hat.item(3)),
+                    X_hat.item(2) * math.cos(X_hat.item(3)),
+                ],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ]
+        )
         PHI = np.eye(4) + A * h
         X_prd = X_hat + h * f_hat
         P_prd = PHI * P_hat * PHI.T + Q
