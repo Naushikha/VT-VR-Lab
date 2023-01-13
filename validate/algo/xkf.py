@@ -51,9 +51,8 @@ def exogenous_kalman(aisData):
     for deltaAT in aT:
 
         # Store simulation data: only x & y for plotting
-        # [time x_prd y_prd U_prd chi_prd x_hat' a r];
-        aX.append(x_prd)
-        aY.append(y_prd)
+        aX.append(x_hat.item(0))
+        aY.append(x_hat.item(1))
 
         # Measurements
         if (deltaAT >= aisData["time"][k]):
