@@ -85,7 +85,7 @@ def plot_algo(algo="DR"):
         aX, aY = dead_reckoning(aisData)
     if (algo == "EKF"):
         aX, aY = extended_kalman(aisData)
-    plt.plot(aX, aY)
+    plt.plot(aX, aY, 'o-',  markersize=1, linestyle='dotted')
 
 
 plt.plot(X, Y)
