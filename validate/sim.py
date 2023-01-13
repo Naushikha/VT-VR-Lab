@@ -93,7 +93,7 @@ def plot_algo(algo="DR"):
     if (algo == "XKF"):
         aX, aY = exogenous_kalman(aisData)
         algoList.append("Exogenous Kalman Filter")
-    plt.plot(aX, aY, 'o-',  markersize=1, linestyle='dotted')
+    plt.plot(aX, aY, 'o:',  markersize=1)
 
 
 plt.plot(X, Y)
