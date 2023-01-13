@@ -12,7 +12,7 @@ def computeFossenChi(aisData):
     prevY = 0
     correctedChi = []
     for i in range(len(aisData["time"])):
-        newChi = math.atan2((aisData["x"][i]-prevX), (aisData["y"][i]-prevY))
+        newChi = math.atan2((aisData["y"][i]-prevY), (aisData["x"][i]-prevX))
         correctedChi.append(newChi)
         prevX = aisData["x"][i]
         prevY = aisData["y"][i]
