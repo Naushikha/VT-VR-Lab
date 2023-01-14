@@ -79,6 +79,8 @@ aisData = {
     "duration": time,
 }
 
+fig, ax = plt.subplots(figsize=(14, 8))
+graphList = []
 algoList = []
 
 
@@ -92,11 +94,14 @@ def plot_algo(algo="DR"):
     if algo == "XKF":
         aX, aY = exogenous_kalman(aisData)
         algoList.append("Exogenous Kalman Filter")
-    plt.plot(aX, aY, "o:", markersize=1)
+    tmpGraph, = ax.plot(aX, aY, "o:", markersize=1)
+    graphList.append(tmpGraph)
 
 
-plt.plot(X, Y)
-plt.plot(aisX, aisY, "ro")
+tmpGraph, = ax.plot(X, Y)
+graphList.append(tmpGraph)
+tmpGraph, = ax.plot(aisX, aisY, "ro")
+graphList.append(tmpGraph)
 plot_algo("DR")
 plot_algo("EKF")
 plot_algo("XKF")
@@ -104,9 +109,28 @@ plot_algo("XKF")
 legendList = ["True Path", "AIS Report"]
 legendList.extend(algoList)
 
-plt.legend(legendList)
+legend = plt.legend(legendList)
 plt.title("AIS Vessel Motion Simulator")
 plt.xlabel("X-Axis (m)")
 plt.ylabel("Y-Axis (m)")
 
+graphLegends = {}
+
+i = 0
+for legendEntry in legend.get_lines():  # Skip first two legends
+    legendEntry.set_picker(True)
+    legendEntry.set_pickradius(10)
+    graphLegends[legendEntry] = graphList[i]
+    i += 1
+
+
+def onLegendPick(event):
+    legend = event.artist
+    isVisible = legend.get_visible()
+    graphLegends[legend].set_visible(not isVisible)
+    legend.set_visible(not isVisible)
+    fig.canvas.draw()
+
+
+plt.connect('pick_event', onLegendPick)
 plt.show()
