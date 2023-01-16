@@ -4,6 +4,7 @@ import numpy as np
 from algo.dr import dead_reckoning
 from algo.ekf import extended_kalman
 from algo.xkf import exogenous_kalman
+from algo.ukf import unscented_kalman
 
 X = np.linspace(0, 100, 1000)  # in meters
 Y = []
@@ -94,6 +95,9 @@ def plot_algo(algo="DR"):
     if algo == "XKF":
         aX, aY = exogenous_kalman(aisData)
         algoList.append("Exogenous Kalman Filter")
+    if algo == "UKF":
+        aX, aY = unscented_kalman(aisData)
+        algoList.append("Unscented Kalman Filter")
     tmpGraph, = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
 
@@ -105,6 +109,7 @@ graphList.append(tmpGraph)
 plot_algo("DR")
 plot_algo("EKF")
 plot_algo("XKF")
+plot_algo("UKF")
 
 legendList = ["True Path", "AIS Report"]
 legendList.extend(algoList)

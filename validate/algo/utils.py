@@ -28,3 +28,10 @@ def fixCourse(aisData):
     for course in aisData["course"]:
         correctedCourse.append(-wrapToPi(math.radians(course) - np.pi / 2))
     return correctedCourse
+
+
+def course2Rad(aisData):
+    correctedCourse = []
+    for course in aisData["course"]:
+        correctedCourse.append(wrapToPi(math.radians(course)))
+    return correctedCourse
