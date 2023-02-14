@@ -5,6 +5,7 @@ from algo.dr import dead_reckoning
 from algo.ekf import extended_kalman
 from algo.xkf import exogenous_kalman
 from algo.ukf import unscented_kalman
+from algo.pvb import projective_velocity_blending
 
 X = np.linspace(0, 100, 1000)  # in meters
 Y = []
@@ -59,7 +60,8 @@ print("Speed:", speedKnots, "knots")
 
 print("Reporting Interval:", getAISReportingIntervalBySpeed(speedKnots))
 
-aisT = np.arange(0, time, getAISReportingIntervalBySpeed(speedKnots))  # in seconds
+aisT = np.arange(0, time, getAISReportingIntervalBySpeed(
+    speedKnots))  # in seconds
 aisX = []  # in meters
 aisY = []  # in meters
 aisC = []  # in degrees
@@ -98,6 +100,9 @@ def plot_algo(algo="DR"):
     if algo == "UKF":
         aX, aY = unscented_kalman(aisData)
         algoList.append("Unscented Kalman Filter")
+    if algo == "PVB":
+        aX, aY = projective_velocity_blending(aisData)
+        algoList.append("Projective Velocity Blending")
     tmpGraph, = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
 
@@ -107,9 +112,10 @@ graphList.append(tmpGraph)
 tmpGraph, = ax.plot(aisX, aisY, "ro")
 graphList.append(tmpGraph)
 plot_algo("DR")
-plot_algo("EKF")
-plot_algo("XKF")
-plot_algo("UKF")
+# plot_algo("EKF")
+# plot_algo("XKF")
+# plot_algo("UKF")
+plot_algo("PVB")
 
 legendList = ["True Path", "AIS Report"]
 legendList.extend(algoList)
