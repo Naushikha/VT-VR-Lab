@@ -23,14 +23,15 @@ def projective_velocity_blending(aisData):
     bVelocity = np.array([0, 0])  # blended velocity
 
     tSinceL = 0  # Time since last update
-    tDelta = 16  # Time between updates: recommended to keep constant
+    tDelta = 0.333  # Time between updates: recommended to keep constant
 
     for deltaAT in aT:
         if deltaAT >= aisData["time"][k]:
             # for pvb
-            oPos = lPos
+            if (posList):
+                oPos = posList[-1]
             oVelocity = lVelocity
-            # tDelta = tSinceL
+            tDelta = tSinceL
             tSinceL = 0
             lPos = np.array([aisData["x"][k], aisData["y"][k]])
             lCourse = aisData["course"][k]
@@ -55,7 +56,7 @@ def projective_velocity_blending(aisData):
             # ###########################
 
         tSinceL += h
-        print("tsincel is ", tSinceL)
+        # print("tsincel is ", tSinceL)
 
         if (tDelta == 0):  # No updates
             continue
