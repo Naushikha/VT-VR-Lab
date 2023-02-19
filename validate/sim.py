@@ -6,6 +6,8 @@ from algo.ekf import extended_kalman
 from algo.xkf import exogenous_kalman
 from algo.ukf import unscented_kalman
 from algo.pvb import projective_velocity_blending
+from algo.own import own_algo
+from algo.rot import rate_turn
 
 X = np.linspace(0, 100, 1000)  # in meters
 Y = []
@@ -103,6 +105,12 @@ def plot_algo(algo="DR"):
     if algo == "PVB":
         aX, aY = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
+    if algo == "OWN":
+        aX, aY = own_algo(aisData)
+        algoList.append("Own Algo")
+    if algo == "ROT":
+        aX, aY = rate_turn(aisData)
+        algoList.append("DR + Rate of Turn")
     tmpGraph, = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
 
@@ -115,7 +123,9 @@ plot_algo("DR")
 # plot_algo("EKF")
 # plot_algo("XKF")
 # plot_algo("UKF")
+plot_algo("ROT")
 plot_algo("PVB")
+plot_algo("OWN")
 
 legendList = ["True Path", "AIS Report"]
 legendList.extend(algoList)

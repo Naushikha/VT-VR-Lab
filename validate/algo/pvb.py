@@ -1,8 +1,5 @@
 import math
 import numpy as np
-from numpy import testing
-from numpy.matrixlib.defmatrix import _convert_from_string
-
 
 def projective_velocity_blending(aisData):
     estFreq = 60  # in Hertz
