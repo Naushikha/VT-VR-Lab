@@ -62,8 +62,7 @@ print("Speed:", speedKnots, "knots")
 
 print("Reporting Interval:", getAISReportingIntervalBySpeed(speedKnots))
 
-aisT = np.arange(0, time, getAISReportingIntervalBySpeed(
-    speedKnots))  # in seconds
+aisT = np.arange(0, time, getAISReportingIntervalBySpeed(speedKnots))  # in seconds
 aisX = []  # in meters
 aisY = []  # in meters
 aisC = []  # in degrees
@@ -89,6 +88,16 @@ graphList = []
 algoList = []
 
 
+def calcAccuracy(algo, aX, aY):
+    # https://stackoverflow.com/a/6723457
+    sumOfSq = 0
+    for i in range(len(X)):
+        algoY = np.interp(X[i], aX, aY)
+        sumOfSq += (algoY - Y[i]) ** 2
+    print("Sum of Squares for ", algo, " :", sumOfSq)
+    print("Mean error for ", algo, " :", sumOfSq / len(X))
+
+
 def plot_algo(algo="DR"):
     if algo == "DR":
         aX, aY = dead_reckoning(aisData)
@@ -111,18 +120,19 @@ def plot_algo(algo="DR"):
     if algo == "ROT":
         aX, aY = rate_turn(aisData)
         algoList.append("DR + Rate of Turn")
-    tmpGraph, = ax.plot(aX, aY, "o:", markersize=1)
+    (tmpGraph,) = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
+    calcAccuracy(algo, aX, aY)
 
 
-tmpGraph, = ax.plot(X, Y)
+(tmpGraph,) = ax.plot(X, Y)
 graphList.append(tmpGraph)
-tmpGraph, = ax.plot(aisX, aisY, "ro")
+(tmpGraph,) = ax.plot(aisX, aisY, "ro")
 graphList.append(tmpGraph)
 plot_algo("DR")
-# plot_algo("EKF")
-# plot_algo("XKF")
-# plot_algo("UKF")
+plot_algo("EKF")
+plot_algo("XKF")
+plot_algo("UKF")
 plot_algo("ROT")
 plot_algo("PVB")
 plot_algo("OWN")
@@ -153,5 +163,5 @@ def onLegendPick(event):
     fig.canvas.draw()
 
 
-plt.connect('pick_event', onLegendPick)
+plt.connect("pick_event", onLegendPick)
 plt.show()

@@ -54,6 +54,6 @@ def unscented_kalman(aisData):
         state_estimator.predict(h)
         state_estimator.update(measure, r_matrix)
         estiList = state_estimator.get_state()
-        aX.append(estiList[0])
-        aY.append(estiList[1])
+        aX.append(estiList[0][0])
+        aY.append(estiList[1][0])
     return [aX, aY]
