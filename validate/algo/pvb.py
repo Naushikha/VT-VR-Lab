@@ -4,7 +4,6 @@ import numpy as np
 def projective_velocity_blending(aisData):
     estFreq = 60  # in Hertz
     h = 1 / estFreq
-    print("h is ", h)
     aT = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []

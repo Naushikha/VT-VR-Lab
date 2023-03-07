@@ -217,6 +217,8 @@ def own_algo(aisData):
             tSinceLastReport = 0  # reset timer
             if k < len(aisData["time"]) - 1:
                 k += 1
+            else:
+                break
         stateFinal = None
         if len(predictors) == 2:
             stateOld = predictors[0].predict(h)
