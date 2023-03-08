@@ -15,7 +15,7 @@ def circleTrial():
     print("Trial Total Distance:", trialTotalDistance, "m")
     print("Trial Time:", trialTime, "s")
     print("Trial Speed:", speedKnots, "knots")
-    print("Reporting Interval:", reportingInterval)
+    print("Reporting Interval:", reportingInterval, "s")
 
     theta = np.linspace(0, 2 * np.pi, 1000)
     X = trialRadius * np.cos(theta)

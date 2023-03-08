@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from algo.dr import dead_reckoning
@@ -22,14 +23,18 @@ algoList = []
 def calcAccuracy(algo, aX, aY):
     # https://stackoverflow.com/a/6723457
     sumOfSq = 0
+    sumOfDiff = 0
     for i in range(len(X)):
         algoY = np.interp(X[i], aX, aY)
         sumOfSq += (algoY - Y[i]) ** 2
-    print("Sum of Squares for ", algo, " :", sumOfSq)
-    print("Mean error for ", algo, " :", sumOfSq / len(X))
+        sumOfDiff += abs(algoY - Y[i])
+    print(algo, " : Sum of Squares : ", sumOfSq)
+    print(algo, " : Sum of Differences : ", sumOfDiff)
+    print(algo, " : Mean Difference : ", sumOfDiff / len(X))
 
 
 def plot_algo(algo="DR"):
+    startTime = time.time()
     if algo == "DR":
         aX, aY = dead_reckoning(aisData)
         algoList.append("Dead Reckoning")
@@ -51,9 +56,12 @@ def plot_algo(algo="DR"):
     if algo == "ROT":
         aX, aY = rate_turn(aisData)
         algoList.append("DR + Rate of Turn")
+    endTime = time.time()
     (tmpGraph,) = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
     calcAccuracy(algo, aX, aY)
+    algoTime = endTime - startTime
+    print(algo, " : Processing Time : ", algoTime)
 
 
 (tmpGraph,) = ax.plot(X, Y)

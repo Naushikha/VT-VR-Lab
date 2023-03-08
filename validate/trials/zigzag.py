@@ -23,7 +23,7 @@ def zigZagTrial():
     print("Trial Total Distance:", trialTotalDistance, "m")
     print("Trial Time:", trialTime, "s")
     print("Trial Speed:", speedKnots, "knots")
-    print("Reporting Interval:", getAISReportingIntervalBySpeed(speedKnots))
+    print("Reporting Interval:", getAISReportingIntervalBySpeed(speedKnots), "s")
 
     aisT = np.arange(0, trialTime, getAISReportingIntervalBySpeed(
         speedKnots))  # in seconds
