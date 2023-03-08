@@ -2,7 +2,10 @@ import math
 
 
 def getCourse(x1, y1, x2, y2):
-    return math.degrees(math.atan2((x2 - x1), (y2 - y1)))
+    course = math.degrees(math.atan2((x2 - x1), (y2 - y1)))
+    if (course < 0):  # course can return negative
+        course += 360
+    return course
 
 
 def getAISReportingIntervalBySpeed(speed, vClass="A"):
