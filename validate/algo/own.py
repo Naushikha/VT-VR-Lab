@@ -37,6 +37,17 @@ def getReportVelocity(aisReport):
     )
 
 
+def getGradient(quadraticCoef, posX):
+    # ax^2 + bx + c
+    x1 = posX - 0.01
+    x2 = posX + 0.01
+    y1 = quadraticCoef[0] * (x1**2) + quadraticCoef[1] * x1 + quadraticCoef[2]
+    y2 = quadraticCoef[0] * (x2**2) + quadraticCoef[1] * x2 + quadraticCoef[2]
+    gradient = (y2 - y1) / (x2 - x1)
+    # print(y2, y1, x2, x1)
+    return gradient
+
+
 def getSpeedByVelocity(velocity):
     return math.sqrt(velocity[0] ** 2 + velocity[1] ** 2)
 
@@ -85,6 +96,55 @@ class P2:  # predicting with two AIS reports
         return self.state
 
 
+def tryForQuadX(aisReports):
+    # http://www2.lawrence.edu/fast/GREGGJ/CMSC210/arithmetic/interpolation.html
+    try:
+        matForInv = np.matrix(
+            [
+                [aisReports[0].position[0] ** 2, aisReports[0].position[0], 1],
+                [aisReports[1].position[0] ** 2, aisReports[1].position[0], 1],
+                [aisReports[2].position[0] ** 2, aisReports[2].position[0], 1],
+            ]
+        )
+        matInv = np.linalg.inv(matForInv)
+        matDep = np.matrix(
+            [
+                aisReports[0].position[1],
+                aisReports[1].position[1],
+                aisReports[2].position[1],
+            ]
+        ).T
+        quadraticCoef = matInv * matDep
+        quadraticCoef = quadraticCoef.A1
+        return quadraticCoef
+    except:
+        return None
+
+
+def tryForQuadY(aisReports):
+    try:
+        matForInv = np.matrix(
+            [
+                [aisReports[0].position[1] ** 2, aisReports[0].position[1], 1],
+                [aisReports[1].position[1] ** 2, aisReports[1].position[1], 1],
+                [aisReports[2].position[1] ** 2, aisReports[2].position[1], 1],
+            ]
+        )
+        matInv = np.linalg.inv(matForInv)
+        matDep = np.matrix(
+            [
+                aisReports[0].position[0],
+                aisReports[1].position[0],
+                aisReports[2].position[0],
+            ]
+        ).T
+        quadraticCoef = matInv * matDep
+        quadraticCoef = quadraticCoef.A1
+        return quadraticCoef
+    except:
+        return None
+
+
 class P3:  # predicting with three AIS reports
     state = VesselState([0, 0], [0, 0])
     quadraticType = "x"  # x or y
@@ -92,82 +152,108 @@ class P3:  # predicting with three AIS reports
 
     def __init__(self, aisReports):
         self.state = VesselState(
-            getReportPosition(aisReports[1]), getReportVelocity(aisReports[1])
+            getReportPosition(aisReports[2]), getReportVelocity(aisReports[2])
         )
-        self.rateOfTurn = (aisReports[1].course - aisReports[0].course) / (
-            aisReports[1].time - aisReports[0].time
-        )
-        # http://www2.lawrence.edu/fast/GREGGJ/CMSC210/arithmetic/interpolation.html
-        try:
-            matForInv = np.matrix(
-                [
-                    [aisReports[0].position[0] ** 2, aisReports[0].position[0], 1],
-                    [aisReports[1].position[0] ** 2, aisReports[1].position[0], 1],
-                    [aisReports[2].position[0] ** 2, aisReports[2].position[0], 1],
-                ]
-            )
-            matInv = np.linalg.inv(matForInv)
-            matDep = np.matrix(
-                [
-                    aisReports[0].position[1],
-                    aisReports[1].position[1],
-                    aisReports[2].position[1],
-                ]
-            ).T
+        coefX = tryForQuadX(aisReports)
+        coefY = tryForQuadY(aisReports)
+        if coefX is not None and coefY is not None:
+            # Pick the best
+            gradientX = 2 * coefX[0] * self.state.position[0] + coefX[1]
+            courseX = (math.pi / 2 - math.atan(gradientX)) * 180 / math.pi
+            gradientY = 2 * coefY[0] * self.state.position[0] + coefY[1]
+            courseY = (math.pi / 2 - math.atan(gradientY)) * 180 / math.pi
+            diffX = abs(courseX - aisReports[2].course)
+            diffY = abs(courseY - aisReports[2].course)
+            print(courseX, courseY, aisReports[2].course)
+            if diffY > diffX:
+                self.quadraticCoef = coefX
+                self.quadraticType = "x"
+            else:
+                self.quadraticCoef = coefY
+                self.quadraticType = "y"
+        elif coefX is not None:
             self.quadraticType = "x"
-        except:  # sideways quadratic function
-            matForInv = np.matrix(
-                [
-                    [aisReports[0].position[1] ** 2, aisReports[0].position[1], 1],
-                    [aisReports[1].position[1] ** 2, aisReports[1].position[1], 1],
-                    [aisReports[2].position[1] ** 2, aisReports[2].position[1], 1],
-                ]
-            )
-            matInv = np.linalg.inv(matForInv)
-            matDep = np.matrix(
-                [
-                    aisReports[0].position[0],
-                    aisReports[1].position[0],
-                    aisReports[2].position[0],
-                ]
-            ).T
+        elif coefY is not None:
             self.quadraticType = "y"
-        quadraticCoef = matInv * matDep
-        self.quadraticCoef = quadraticCoef.A1
+        print("picked", self.quadraticType)
+        print(self.quadraticCoef)
+
         # Set state
         self.state = VesselState(
             getReportPosition(aisReports[2]), getReportVelocity(aisReports[2])
         )
 
     def predict(self, tDelta):
-        # m = 2ax + b
-        gradient = (
-            2 * self.quadraticCoef[0] * self.state.position[0] + self.quadraticCoef[1]
-        )
-        polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
-        tmpPosX = (
-            self.state.position[0]
-            + getSpeedByVelocity(self.state.velocity) * math.sin(polyCourse) * tDelta
-        )
-        # ax2 + bx + c = 0
-        tmpPosY = (
-            self.quadraticCoef[0] * tmpPosX**2
-            + self.quadraticCoef[1] * tmpPosX
-            + self.quadraticCoef[2]
-        )
-        self.state.position = np.array([tmpPosX, tmpPosY])
+        if self.quadraticType == "x":
+            # m = 2ax + b
+            gradient = (
+                2 * self.quadraticCoef[0] * self.state.position[0]
+                + self.quadraticCoef[1]
+            )
+            polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
+            tmpPosX = (
+                self.state.position[0]
+                + getSpeedByVelocity(self.state.velocity)
+                * math.sin(polyCourse)
+                * tDelta
+            )
+            # ax2 + bx + c = 0
+            tmpPosY = (
+                self.quadraticCoef[0] * tmpPosX**2
+                + self.quadraticCoef[1] * tmpPosX
+                + self.quadraticCoef[2]
+            )
+            self.state.position = np.array([tmpPosX, tmpPosY])
 
-        theta = -polyCourse
-        R = np.matrix(
-            [[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]]
-        )  # Rotation matrix
-        velocityNext = np.matmul(
-            R, self.state.velocity
-        ).A1  # https://stackoverflow.com/a/20765358/11436038
-        posNext = np.array([tmpPosX, tmpPosY])
-        stateNext = VesselState(posNext, velocityNext)  # future state
-        self.state = stateNext  # advance state
-        return self.state
+            theta = -polyCourse
+            R = np.matrix(
+                [
+                    [math.cos(theta), -math.sin(theta)],
+                    [math.sin(theta), math.cos(theta)],
+                ]
+            )  # Rotation matrix
+            velocityNext = np.matmul(
+                R, self.state.velocity
+            ).A1  # https://stackoverflow.com/a/20765358/11436038
+            posNext = np.array([tmpPosX, tmpPosY])
+            stateNext = VesselState(posNext, velocityNext)  # future state
+            self.state = stateNext  # advance state
+            return self.state
+        else:
+            # m = 2ay + b
+            gradient = (
+                2 * self.quadraticCoef[0] * self.state.position[1]
+                + self.quadraticCoef[1]
+            )
+            polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
+            tmpPosY = (
+                self.state.position[1]
+                + getSpeedByVelocity(self.state.velocity)
+                * math.sin(polyCourse)
+                * tDelta
+            )
+            # ay2 + by + c = 0
+            tmpPosX = (
+                self.quadraticCoef[0] * tmpPosY**2
+                + self.quadraticCoef[1] * tmpPosY
+                + self.quadraticCoef[2]
+            )
+            self.state.position = np.array([tmpPosX, tmpPosY])
+
+            theta = -polyCourse
+            R = np.matrix(
+                [
+                    [math.cos(theta), -math.sin(theta)],
+                    [math.sin(theta), math.cos(theta)],
+                ]
+            )  # Rotation matrix
+            velocityNext = np.matmul(
+                R, self.state.velocity
+            ).A1  # https://stackoverflow.com/a/20765358/11436038
+            posNext = np.array([tmpPosX, tmpPosY])
+            stateNext = VesselState(posNext, velocityNext)  # future state
+            self.state = stateNext  # advance state
+            return self.state
 
 
 def own_algo(aisData):
@@ -184,14 +270,6 @@ def own_algo(aisData):
     tSinceLastReport = 0
     for deltaAT in aT:
         if deltaAT >= aisData["time"][k]:
-            aisMsg = {
-                "x": aisData["x"][k],
-                "y": aisData["y"][k],
-                "speed": aisData["speed"][k],
-                "course": aisData["course"][k],
-                "rateOfTurn": None,
-                "tSinceLastReport": tSinceLastReport,
-            }
             aisReport = AISReport(
                 aisData["time"][k],
                 [aisData["x"][k], aisData["y"][k]],
