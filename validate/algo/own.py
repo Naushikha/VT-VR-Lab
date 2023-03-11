@@ -1,27 +1,34 @@
 import math
+from typing import Counter
 import numpy as np
 
 
 class AISReport:
     time = 0  # report time
-    position = [0, 0]  # latitude, longitude
+    posX = 0  # longitude
+    posY = 0  # latitude
     speed = 0  # knots
     course = 0  # degrees
 
-    def __init__(self, time, position, speed, course):
+    def __init__(self, time, posX, posY, speed, course):
         self.time = time
-        self.position = position
+        self.posX = posX
+        self.posY = posY
         self.speed = speed
         self.course = course
 
 
 class VesselState:
-    position = np.array([0, 0])
-    velocity = np.array([0, 0])
+    posX = 0  # m
+    posY = 0  # m
+    speed = 0  # ms-1
+    course = 0  # radians
 
-    def __init__(self, position, velocity):
-        self.position = np.array(position)
-        self.velocity = np.array(velocity)
+    def __init__(self, posX, posY, speed, course):
+        self.posX = posX
+        self.posY = posY
+        self.speed = speed
+        self.course = course
 
 
 def getReportPosition(aisReport):
@@ -53,45 +60,58 @@ def getSpeedByVelocity(velocity):
 
 
 class P1:  # predicting with one AIS report
-    state = VesselState([0, 0], [0, 0])
+    state = VesselState(0, 0, 0, 0)
 
     def __init__(self, aisReports):
         self.state = VesselState(
-            getReportPosition(aisReports[0]), getReportVelocity(aisReports[0])
+            aisReports[0].posX,
+            aisReports[0].posY,
+            aisReports[0].speed,
+            deg2rad(aisReports[0].course),
         )
 
     def predict(self, tDelta):
-        velocityNext = self.state.velocity  # no update to velocity
-        posNext = self.state.position + self.state.velocity * tDelta
-        stateNext = VesselState(posNext, velocityNext)  # future state
+        speedNext = self.state.speed  # no update to speed
+        courseNext = self.state.course  # no update to course
+        posXNext = (
+            self.state.posX + self.state.speed * math.sin(self.state.course) * tDelta
+        )
+        posYNext = (
+            self.state.posY + self.state.speed * math.cos(self.state.course) * tDelta
+        )
+        stateNext = VesselState(
+            posXNext, posYNext, speedNext, courseNext
+        )  # future state
         self.state = stateNext  # advance state
         return self.state
 
 
 class P2:  # predicting with two AIS reports
-    state = VesselState([0, 0], [0, 0])
+    state = VesselState(0, 0, 0, 0)
     rateOfTurn = 0  # derive from two directions
 
     def __init__(self, aisReports):
         self.state = VesselState(
-            getReportPosition(aisReports[1]), getReportVelocity(aisReports[1])
+            aisReports[1].posX,
+            aisReports[1].posY,
+            aisReports[1].speed,
+            deg2rad(aisReports[1].course),
         )
-        self.rateOfTurn = (aisReports[1].course - aisReports[0].course) / (
-            aisReports[1].time - aisReports[0].time
+        self.rateOfTurn = math.radians(
+            (aisReports[1].course - aisReports[0].course)
+            / (aisReports[1].time - aisReports[0].time)
         )
 
     def predict(self, tDelta):
-        theta = -math.radians(
-            self.rateOfTurn * tDelta
-        )  # clockwise from +y axis is negative
-        R = np.matrix(
-            [[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]]
-        )  # Rotation matrix
-        velocityNext = np.matmul(
-            R, self.state.velocity
-        ).A1  # https://stackoverflow.com/a/20765358/11436038
-        posNext = self.state.position + self.state.velocity * tDelta
-        stateNext = VesselState(posNext, velocityNext)  # future state
+        speedNext = self.state.speed  # no update to speed
+        courseNext = (
+            self.state.course + self.rateOfTurn * tDelta
+        )  # utilize rate of turn
+        posXNext = self.state.posX + self.state.speed * math.sin(courseNext) * tDelta
+        posYNext = self.state.posY + self.state.speed * math.cos(courseNext) * tDelta
+        stateNext = VesselState(
+            posXNext, posYNext, speedNext, courseNext
+        )  # future state
         self.state = stateNext  # advance state
         return self.state
 
@@ -145,8 +165,70 @@ def tryForQuadY(aisReports):
         return None
 
 
+def deg2rad(deg):
+    return deg * math.pi / 180
+
+
+def rad2deg(rad):
+    return rad * 180 / math.pi
+
+
+# Clamp course to 0-360
+def normalizeCourse(course):
+    course = course % 360
+    if course < 0:
+        course += 360
+    return course
+
+
+# Need quad type, coefs, and state (position and velocity) to determine course
+def getQuadCourseByState(quadType, quadCoef, state):
+    print("quad velocity", state.velocity)
+    stateCourse = normalizeCourse(
+        rad2deg(math.atan(state.velocity[0] / state.velocity[1]))
+    )
+    if quadType == "x":
+        # m = 2ax + b
+        gradient = 2 * quadCoef[0] * state.position[0] + quadCoef[1]
+        courseXPlus = normalizeCourse(rad2deg(math.atan(gradient)))
+        courseXMinus = normalizeCourse(courseXPlus + 180)
+        diffXPlus = abs(courseXPlus - stateCourse)
+        diffXMinus = abs(courseXMinus - stateCourse)
+        print(
+            "stateCourse courseXPlus courseXMinus",
+            stateCourse,
+            courseXPlus,
+            courseXMinus,
+        )
+        if diffXMinus > diffXPlus:
+            # print("picked courseXPlus")
+            return courseXPlus
+        else:
+            # print("picked courseXMinus")
+            return courseXMinus
+    if quadType == "y":
+        # m = 2ay + b
+        gradient = 2 * quadCoef[0] * state.position[1] + quadCoef[1]
+        courseYPlus = normalizeCourse(rad2deg(math.atan(gradient)))
+        courseYMinus = normalizeCourse(courseYPlus + 180)
+        diffYPlus = abs(courseYPlus - stateCourse)
+        diffYMinus = abs(courseYMinus - stateCourse)
+        print(
+            "stateCourse courseYPlus courseYMinus",
+            stateCourse,
+            courseYPlus,
+            courseYMinus,
+        )
+        if diffYMinus > diffYPlus:
+            print("picked courseYPlus")
+            return courseYPlus
+        else:
+            print("picked courseYMinus")
+            return courseYMinus
+
+
 class P3:  # predicting with three AIS reports
-    state = VesselState([0, 0], [0, 0])
+    state = VesselState(0, 0, 0, 0)
     quadraticType = "x"  # x or y
     quadraticCoef = []
 
@@ -154,17 +236,38 @@ class P3:  # predicting with three AIS reports
         self.state = VesselState(
             getReportPosition(aisReports[2]), getReportVelocity(aisReports[2])
         )
+        print(
+            "x:",
+            aisReports[0].position[0],
+            ",",
+            aisReports[1].position[0],
+            ",",
+            aisReports[2].position[0],
+        )
+        print(
+            "y:",
+            aisReports[0].position[1],
+            ",",
+            aisReports[1].position[1],
+            ",",
+            aisReports[2].position[1],
+        )
         coefX = tryForQuadX(aisReports)
         coefY = tryForQuadY(aisReports)
         if coefX is not None and coefY is not None:
             # Pick the best
-            gradientX = 2 * coefX[0] * self.state.position[0] + coefX[1]
-            courseX = (math.pi / 2 - math.atan(gradientX)) * 180 / math.pi
-            gradientY = 2 * coefY[0] * self.state.position[0] + coefY[1]
-            courseY = (math.pi / 2 - math.atan(gradientY)) * 180 / math.pi
+            # m = 2ax + b
+            # gradientX = 2 * coefX[0] * self.state.position[0] + coefX[1]
+            # courseX = (math.pi / 2 - math.atan(gradientX)) * 180 / math.pi
+            courseX = getQuadCourseByState("x", coefX, self.state)
+            # m = 2ay + b
+            # gradientY = 2 * coefY[0] * self.state.position[1] + coefY[1]
+            # courseY = (math.pi * 2 - math.atan(gradientY)) * 180 / math.pi
+            courseY = getQuadCourseByState("y", coefY, self.state)
             diffX = abs(courseX - aisReports[2].course)
             diffY = abs(courseY - aisReports[2].course)
-            print(courseX, courseY, aisReports[2].course)
+            print("actual courseX courseY:", aisReports[2].course, courseX, courseY)
+            # print(courseX, courseY, aisReports[2].course)
             if diffY > diffX:
                 self.quadraticCoef = coefX
                 self.quadraticType = "x"
@@ -172,11 +275,14 @@ class P3:  # predicting with three AIS reports
                 self.quadraticCoef = coefY
                 self.quadraticType = "y"
         elif coefX is not None:
+            self.quadraticCoef = coefX
             self.quadraticType = "x"
         elif coefY is not None:
+            self.quadraticCoef = coefY
             self.quadraticType = "y"
         print("picked", self.quadraticType)
         print(self.quadraticCoef)
+        print("----------------------------")
 
         # Set state
         self.state = VesselState(
@@ -186,11 +292,15 @@ class P3:  # predicting with three AIS reports
     def predict(self, tDelta):
         if self.quadraticType == "x":
             # m = 2ax + b
-            gradient = (
-                2 * self.quadraticCoef[0] * self.state.position[0]
-                + self.quadraticCoef[1]
-            )
-            polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
+            # gradient = (
+            #     2 * self.quadraticCoef[0] * self.state.position[0]
+            #     + self.quadraticCoef[1]
+            # )
+            # polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
+            course = getQuadCourseByState("x", self.quadraticCoef, self.state)
+            # print("course:", course)
+            polyCourse = deg2rad(course)
+            print("course:", course)
             tmpPosX = (
                 self.state.position[0]
                 + getSpeedByVelocity(self.state.velocity)
@@ -215,21 +325,27 @@ class P3:  # predicting with three AIS reports
             velocityNext = np.matmul(
                 R, self.state.velocity
             ).A1  # https://stackoverflow.com/a/20765358/11436038
+            speed = getSpeedByVelocity(velocityNext)
+            velocityNext = [speed * math.sin(polyCourse), speed * math.cos(polyCourse)]
             posNext = np.array([tmpPosX, tmpPosY])
             stateNext = VesselState(posNext, velocityNext)  # future state
             self.state = stateNext  # advance state
             return self.state
         else:
             # m = 2ay + b
-            gradient = (
-                2 * self.quadraticCoef[0] * self.state.position[1]
-                + self.quadraticCoef[1]
-            )
-            polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
+            # gradient = (
+            #     2 * self.quadraticCoef[0] * self.state.position[1]
+            #     + self.quadraticCoef[1]
+            # )
+            # polyCourse = math.pi / 2 - math.atan(gradient)  # * 180 / math.pi
+            course = getQuadCourseByState("y", self.quadraticCoef, self.state)
+            # print("course:", course)
+            polyCourse = deg2rad(course)
+            print("course:", course)
             tmpPosY = (
                 self.state.position[1]
                 + getSpeedByVelocity(self.state.velocity)
-                * math.sin(polyCourse)
+                * math.cos(polyCourse)
                 * tDelta
             )
             # ay2 + by + c = 0
@@ -250,8 +366,13 @@ class P3:  # predicting with three AIS reports
             velocityNext = np.matmul(
                 R, self.state.velocity
             ).A1  # https://stackoverflow.com/a/20765358/11436038
+            speed = getSpeedByVelocity(velocityNext)
+            velocityNext = [speed * math.sin(polyCourse), speed * math.cos(polyCourse)]
             posNext = np.array([tmpPosX, tmpPosY])
             stateNext = VesselState(posNext, velocityNext)  # future state
+            print("velocity:", velocityNext[0], velocityNext[1])
+            print("speed:", getSpeedByVelocity(velocityNext))
+            print("---")
             self.state = stateNext  # advance state
             return self.state
 
@@ -264,7 +385,7 @@ def own_algo(aisData):
     aY = []
     k = 0
     aisReports = []  # Max 3 reports
-    vesselState = VesselState([0, 0], [0, 0])  # Store vessel state
+    vesselState = VesselState(0, 0, 0, 0)  # Store vessel state
     predictors = []  # Max 2 predictors: to blend (prev and current)
     reportingTime = 0
     tSinceLastReport = 0
@@ -272,11 +393,12 @@ def own_algo(aisData):
         if deltaAT >= aisData["time"][k]:
             aisReport = AISReport(
                 aisData["time"][k],
-                [aisData["x"][k], aisData["y"][k]],
+                aisData["x"][k],
+                aisData["y"][k],
                 aisData["speed"][k],
                 aisData["course"][k],
             )
-            if len(aisReports) == 3:  # Only keep last 3 reports
+            if len(aisReports) == 2:  # Only keep last 3 reports
                 aisReports.pop(0)
             aisReports.append(aisReport)
             # Init predictors
@@ -286,13 +408,14 @@ def own_algo(aisData):
                 predictors.append(P1(aisReports))
             elif len(aisReports) == 2:
                 predictors.append(P2(aisReports))
-            elif len(aisReports) == 3:
-                try:
-                    predictors.append(P3(aisReports))
-                except:
-                    print("bad 3-pred!")
+            # elif len(aisReports) == 3:
+            #     try:
+            #         predictors.append(P2(aisReports))
+            #     except:
+            #         print("bad 3-pred!")
             reportingTime = tSinceLastReport
             tSinceLastReport = 0  # reset timer
+            print("-----")
             if k < len(aisData["time"]) - 1:
                 k += 1
             else:
@@ -303,23 +426,23 @@ def own_algo(aisData):
             stateNew = predictors[1].predict(h)
             # Blend between two
             blendWeight = tSinceLastReport / reportingTime
-            posFinal = (
-                stateOld.position
-                + (stateNew.position - stateOld.position) * blendWeight
+            posXFinal = stateOld.posX + (stateNew.posX - stateOld.posX) * blendWeight
+            posYFinal = stateOld.posY + (stateNew.posY - stateOld.posY) * blendWeight
+            speedFinal = (
+                stateOld.speed + (stateNew.speed - stateOld.speed) * blendWeight
             )
-            velFinal = (
-                stateOld.velocity
-                + (stateNew.velocity - stateOld.velocity) * blendWeight
+            courseFinal = (
+                stateOld.course + (stateNew.course - stateOld.course) * blendWeight
             )
-            stateFinal = VesselState(posFinal, velFinal)
-            # stateFinal = stateNew # Override blending
+            stateFinal = VesselState(posXFinal, posYFinal, speedFinal, courseFinal)
+            # stateFinal = stateNew  # Override blending
         if len(predictors) == 1:
             stateNew = predictors[0].predict(h)
             stateFinal = stateNew
         if stateFinal is not None:
             vesselState = stateFinal
             # print(stateFinal.position)
-            aX.append(stateFinal.position[0])
-            aY.append(stateFinal.position[1])
+            aX.append(stateFinal.posX)
+            aY.append(stateFinal.posY)
         tSinceLastReport += h
     return [aX, aY]
