@@ -39,7 +39,7 @@ class P1:  # predicting with one AIS report
             aisReports[0].posX,
             aisReports[0].posY,
             aisReports[0].speed,
-            deg2rad(aisReports[0].course),
+            math.radians(aisReports[0].course),
         )
 
     def predict(self, tDelta):
@@ -67,7 +67,7 @@ class P2:  # predicting with two AIS reports
             aisReports[1].posX,
             aisReports[1].posY,
             aisReports[1].speed,
-            deg2rad(aisReports[1].course),
+            math.radians(aisReports[1].course),
         )
         self.rateOfTurn = math.radians(
             (aisReports[1].course - aisReports[0].course)
@@ -88,24 +88,18 @@ class P2:  # predicting with two AIS reports
         return self.state
 
 
-def tryForQuadX(aisReports):
+def solveQuad(p1PosX, p1PosY, p2PosX, p2PosY, p3PosX, p3PosY):
     # http://www2.lawrence.edu/fast/GREGGJ/CMSC210/arithmetic/interpolation.html
     try:
         matForInv = np.matrix(
             [
-                [aisReports[0].posX ** 2, aisReports[0].posX, 1],
-                [aisReports[1].posX ** 2, aisReports[1].posX, 1],
-                [aisReports[2].posX ** 2, aisReports[2].posX, 1],
+                [p1PosX**2, p1PosX, 1],
+                [p2PosX**2, p2PosX, 1],
+                [p3PosX**2, p3PosX, 1],
             ]
         )
         matInv = np.linalg.inv(matForInv)
-        matDep = np.matrix(
-            [
-                aisReports[0].posY,
-                aisReports[1].posY,
-                aisReports[2].posY,
-            ]
-        ).T
+        matDep = np.matrix([p1PosY, p2PosY, p3PosY]).T
         quadraticCoef = matInv * matDep
         quadraticCoef = quadraticCoef.A1
         return quadraticCoef
@@ -113,193 +107,124 @@ def tryForQuadX(aisReports):
         return None
 
 
-def tryForQuadY(aisReports):
-    try:
-        matForInv = np.matrix(
-            [
-                [aisReports[0].posY ** 2, aisReports[0].posY, 1],
-                [aisReports[1].posY ** 2, aisReports[1].posY, 1],
-                [aisReports[2].posY ** 2, aisReports[2].posY, 1],
-            ]
-        )
-        matInv = np.linalg.inv(matForInv)
-        matDep = np.matrix(
-            [
-                aisReports[0].posX,
-                aisReports[1].posX,
-                aisReports[2].posX,
-            ]
-        ).T
-        quadraticCoef = matInv * matDep
-        quadraticCoef = quadraticCoef.A1
-        return quadraticCoef
-    except:
-        return None
+def point2angle(x, y):
+    # Calculate the angle in radians
+    if x > 0 and y >= 0:
+        # First quadrant
+        angle = math.atan(y / x)
+    elif x > 0 and y < 0:
+        # Fourth quadrant
+        angle = math.atan(y / x) + 2 * math.pi
+    elif x < 0:
+        # Second or third quadrant
+        angle = math.atan(y / x) + math.pi
+    elif x == 0 and y > 0:
+        # Positive y-axis
+        angle = math.pi / 2
+    elif x == 0 and y < 0:
+        # Negative y-axis
+        angle = 3 * math.pi / 2
+    else:
+        # Origin
+        angle = 0
+
+    # Convert the angle to degrees
+    return math.degrees(angle)
 
 
-def deg2rad(deg):
-    return deg * math.pi / 180
+def transformPoint(x, y, angle):
+    # Convert the angle to radians
+    theta = math.radians(angle)
 
+    # Apply the rotation transformation
+    x1 = x * math.cos(theta) - y * math.sin(theta)
+    y1 = x * math.sin(theta) + y * math.cos(theta)
 
-def rad2deg(rad):
-    return rad * 180 / math.pi
-
-
-# Clamp course to 0-360
-def normalizeCourse(course):
-    course = course % 360
-    if course < 0:
-        course += 360
-    return course
-
-
-# Need quad type, coefs, and state (position, course) to determine course
-def getQuadCourseByState(quadType, quadCoef, state):
-    stateCourse = normalizeCourse(rad2deg(state.course))
-    if quadType == "x":
-        # m = 2ax + b
-        gradient = 2 * quadCoef[0] * state.posX + quadCoef[1]
-        courseXPlus = normalizeCourse(rad2deg(math.atan(gradient)))
-        courseXMinus = normalizeCourse(courseXPlus + 180)
-        diffXPlus = abs(courseXPlus - stateCourse)
-        diffXMinus = abs(courseXMinus - stateCourse)
-        print(
-            "stateCourse courseXPlus courseXMinus",
-            stateCourse,
-            courseXPlus,
-            courseXMinus,
-        )
-        if diffXMinus > diffXPlus:
-            # print("picked courseXPlus")
-            return courseXPlus
-        else:
-            # print("picked courseXMinus")
-            return courseXMinus
-    if quadType == "y":
-        # m = 2ay + b
-        gradient = 2 * quadCoef[0] * state.posY + quadCoef[1]
-        courseYPlus = normalizeCourse(rad2deg(math.atan(gradient)))
-        courseYMinus = normalizeCourse(courseYPlus + 180)
-        diffYPlus = abs(courseYPlus - stateCourse)
-        diffYMinus = abs(courseYMinus - stateCourse)
-        print(
-            "stateCourse courseYPlus courseYMinus",
-            stateCourse,
-            courseYPlus,
-            courseYMinus,
-        )
-        if diffYMinus > diffYPlus:
-            # print("picked courseYPlus")
-            return courseYPlus
-        else:
-            # print("picked courseYMinus")
-            return courseYMinus
+    # Return the transformed point
+    return x1, y1
 
 
 class P3:  # predicting with three AIS reports
     state = VesselState(0, 0, 0, 0)
     quadraticType = "x"  # x or y
     quadraticCoef = []
+    transAngle = 0
+    transCoef = []
+    transState = VesselState(0, 0, 0, 0)
 
     def __init__(self, aisReports):
         self.state = VesselState(
             aisReports[2].posX,
             aisReports[2].posY,
             aisReports[2].speed,
-            deg2rad(aisReports[2].course),
+            math.radians(aisReports[2].course),
         )
         print(
-            "x:",
-            aisReports[0].posX,
-            ",",
-            aisReports[1].posX,
-            ",",
-            aisReports[2].posX,
+            "x:", aisReports[0].posX, aisReports[1].posX, aisReports[2].posX, sep=" , "
         )
         print(
-            "y:",
-            aisReports[0].posY,
-            ",",
-            aisReports[1].posY,
-            ",",
-            aisReports[2].posY,
+            "y:", aisReports[0].posY, aisReports[1].posY, aisReports[2].posY, sep=" , "
         )
-        coefX = tryForQuadX(aisReports)
-        coefY = tryForQuadY(aisReports)
-        if coefX is not None and coefY is not None:
-            # Pick the best
-            courseX = getQuadCourseByState("x", coefX, self.state)
-            courseY = getQuadCourseByState("y", coefY, self.state)
-            diffX = abs(courseX - aisReports[2].course)
-            diffY = abs(courseY - aisReports[2].course)
-            print("actual courseX courseY:", aisReports[2].course, courseX, courseY)
-            if diffY > diffX:
-                self.quadraticCoef = coefX
-                self.quadraticType = "x"
-            else:
-                self.quadraticCoef = coefY
-                self.quadraticType = "y"
-        elif coefX is not None:
-            self.quadraticCoef = coefX
-            self.quadraticType = "x"
-        elif coefY is not None:
-            self.quadraticCoef = coefY
-            self.quadraticType = "y"
-        print("picked", self.quadraticType)
-        print(self.quadraticCoef)
+        # Consider Point-1 as origin and calculate vector to Point-3: Vector[1->3]
+        VecX = aisReports[2].posX - aisReports[0].posX
+        VecY = aisReports[2].posY - aisReports[0].posY
+        transAngle = point2angle(VecX, VecY)
+        print("trans angle:", transAngle)
+        self.transAngle = transAngle
+        # Transform coordinates to coincide Vector[1->3] with Positive X-axis
+        p1PosX, p1PosY = transformPoint(
+            aisReports[0].posX, aisReports[0].posY, -transAngle
+        )
+        p2PosX, p2PosY = transformPoint(
+            aisReports[1].posX, aisReports[1].posY, -transAngle
+        )
+        p3PosX, p3PosY = transformPoint(
+            aisReports[2].posX, aisReports[2].posY, -transAngle
+        )
+        print("new x:", p1PosX, p2PosX, p3PosX, sep=" , ")
+        print("new y:", p1PosY, p2PosY, p3PosY, sep=" , ")
+        # Check if Point-2 lies in between Point-1 and Point-3
+        if not (p1PosX < p2PosX and p2PosX < p3PosX):
+            raise Exception("Point-2 is not between Point-1 and Point-3")
+            # Quad prediction not possible fallback to prediction using 1 point
+        coef = solveQuad(p1PosX, p1PosY, p2PosX, p2PosY, p3PosX, p3PosY)
+        print(coef)
+        self.transCoef = coef
+        gradient = 2 * coef[0] * p3PosX + coef[1]
+        transCourse = math.atan(gradient)  # is relative to the x-axis
+        print("courseAIS courseQuad:", aisReports[2].course, math.degrees(transCourse))
+        self.transState = VesselState(p3PosX, p3PosY, aisReports[2].speed, transCourse)
         print("----------------------------")
 
     def predict(self, tDelta):
-        if self.quadraticType == "x":
-            # m = 2ax + b
-            # gradient = (
-            #     2 * self.quadraticCoef[0] * self.state.posX
-            #     + self.quadraticCoef[1]
-            # )
-            course = getQuadCourseByState("x", self.quadraticCoef, self.state)
-            polyCourse = deg2rad(course)
-            print("course:", course)
-            tmpPosX = self.state.posX + self.state.speed * math.sin(polyCourse) * tDelta
-            # ax2 + bx + c = 0
-            tmpPosY = (
-                self.quadraticCoef[0] * tmpPosX**2
-                + self.quadraticCoef[1] * tmpPosX
-                + self.quadraticCoef[2]
-            )
-            speedNext = self.state.speed  # no update to speed
-            courseNext = polyCourse
-            posXNext = tmpPosX
-            posYNext = tmpPosY
-            stateNext = VesselState(
-                posXNext, posYNext, speedNext, courseNext
-            )  # future state
-            self.state = stateNext  # advance state
-            return self.state
-        if self.quadraticType == "y":
-            # m = 2ay + b
-            # gradient = (
-            #     2 * self.quadraticCoef[0] * self.state.posY
-            #     + self.quadraticCoef[1]
-            # )
-            course = getQuadCourseByState("y", self.quadraticCoef, self.state)
-            polyCourse = deg2rad(course)
-            print("course:", course)
-            tmpPosY = self.state.posY + self.state.speed * math.cos(polyCourse) * tDelta
-            # ay2 + by + c = 0
-            tmpPosX = (
-                self.quadraticCoef[0] * tmpPosY**2
-                + self.quadraticCoef[1] * tmpPosY
-                + self.quadraticCoef[2]
-            )
-            speedNext = self.state.speed  # no update to speed
-            courseNext = polyCourse
-            posXNext = tmpPosX
-            posYNext = tmpPosY
-            stateNext = VesselState(
-                posXNext, posYNext, speedNext, courseNext
-            )  # future state
-            self.state = stateNext  # advance state
-            return self.state
+        posXNext = (
+            self.transState.posX
+            + self.transState.speed * math.cos(self.transState.course) * tDelta
+        )
+        # print(
+        #     "speed course speed X:",
+        #     self.transState.speed,
+        #     self.transState.course,
+        #     self.transState.speed * math.cos(self.transState.course),
+        # )
+        # ax2 + bx + c = 0
+        posYNext = (
+            self.transCoef[0] * posXNext**2
+            + self.transCoef[1] * posXNext
+            + self.transCoef[2]
+        )
+        speedNext = self.state.speed  # no update to speed
+        gradient = 2 * self.transCoef[0] * posXNext + self.transCoef[1]
+        courseNext = math.atan(gradient)
+        transStateNext = VesselState(
+            posXNext, posYNext, speedNext, courseNext
+        )  # future state
+        self.transState = transStateNext  # advance state
+        # transform back
+        posXNext, posYNext = transformPoint(posXNext, posYNext, self.transAngle)
+        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        self.state = stateNext
+        return self.state
 
 
 def own_algo(aisData):
