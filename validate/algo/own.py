@@ -151,6 +151,9 @@ class P3:  # predicting with three AIS reports
     transAngle = 0
     transCoef = []
     transState = VesselState(0, 0, 0, 0)
+    quadCoefX = []
+    quadCoefY = []
+    quadTime = 0
 
     def __init__(self, aisReports):
         self.state = VesselState(
@@ -165,6 +168,28 @@ class P3:  # predicting with three AIS reports
         print(
             "y:", aisReports[0].posY, aisReports[1].posY, aisReports[2].posY, sep=" , "
         )
+        print(
+            "t:", aisReports[0].time, aisReports[1].time, aisReports[2].time, sep=" , "
+        )
+        quadCoefX = solveQuad(
+            aisReports[0].time,
+            aisReports[0].posX,
+            aisReports[1].time,
+            aisReports[1].posX,
+            aisReports[2].time,
+            aisReports[2].posX,
+        )
+        quadCoefY = solveQuad(
+            aisReports[0].time,
+            aisReports[0].posY,
+            aisReports[1].time,
+            aisReports[1].posY,
+            aisReports[2].time,
+            aisReports[2].posY,
+        )
+        self.quadCoefX = quadCoefX
+        self.quadCoefY = quadCoefY
+        self.quadTime = aisReports[2].time
         # Consider Point-1 as origin and calculate vector to Point-3: Vector[1->3]
         VecX = aisReports[2].posX - aisReports[0].posX
         VecY = aisReports[2].posY - aisReports[0].posY
@@ -197,6 +222,22 @@ class P3:  # predicting with three AIS reports
         print("----------------------------")
 
     def predict(self, tDelta):
+        self.quadTime += tDelta
+        posXNext = (
+            self.quadCoefX[0] * self.quadTime**2
+            + self.quadCoefX[1] * self.quadTime
+            + self.quadCoefX[2]
+        )
+        posYNext = (
+            self.quadCoefY[0] * self.quadTime**2
+            + self.quadCoefY[1] * self.quadTime
+            + self.quadCoefY[2]
+        )
+        speedNext = self.state.speed  # no update to speed
+        courseNext = 0
+        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        self.state = stateNext
+        return self.state
         posXNext = (
             self.transState.posX
             + self.transState.speed * math.cos(self.transState.course) * tDelta
@@ -284,7 +325,7 @@ def own_algo(aisData):
                 stateOld.course + (stateNew.course - stateOld.course) * blendWeight
             )
             stateFinal = VesselState(posXFinal, posYFinal, speedFinal, courseFinal)
-            # stateFinal = stateNew  # Override blending
+            stateFinal = stateNew  # Override blending
         if len(predictors) == 1:
             stateNew = predictors[0].predict(h)
             stateFinal = stateNew
