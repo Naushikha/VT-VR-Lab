@@ -25,8 +25,9 @@ def zigZagTrial():
     print("Trial Speed:", speedKnots, "knots")
     print("Reporting Interval:", getAISReportingIntervalBySpeed(speedKnots), "s")
 
-    aisT = np.arange(0, trialTime, getAISReportingIntervalBySpeed(
-        speedKnots))  # in seconds
+    aisT = np.arange(
+        0, trialTime, getAISReportingIntervalBySpeed(speedKnots)
+    )  # in seconds
     aisX = []  # in meters
     aisY = []  # in meters
     aisC = []  # in degrees
@@ -38,6 +39,17 @@ def zigZagTrial():
         aisY.append(tY)
         aisC.append(tH)
 
+    # For accuracy calculations
+    estFreq = 60  # Hertz
+    nT = np.linspace(0, trialTime, trialTime * estFreq)  # in meters
+    nX = []
+    nY = []
+    for tinyNT in nT:
+        nnX, nnY, nnH = getAISDataByDist(X, Y, tinyNT * speed)
+        nX.append(nnX)
+        nY.append(nnY)
+
+
     aisData = {
         "time": aisT,
         "x": aisX,
@@ -47,4 +59,4 @@ def zigZagTrial():
         "duration": trialTime,
     }
 
-    return X, Y, aisData
+    return nX, nY, nT, aisData

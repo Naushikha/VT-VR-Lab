@@ -9,9 +9,10 @@ def extended_kalman(aisData):
     aisData = copy.deepcopy(aisData)
     estFreq = 60  # in Hertz
     h = 1 / estFreq
-    aT = np.arange(0, aisData["duration"], h)
+    T = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []
+    aT = []
     k = 0
     # aisData["course"] = computeFossenChi(aisData)  # in Radians
     aisData["course"] = fixCourse(aisData)  # in Radians
@@ -23,14 +24,14 @@ def extended_kalman(aisData):
     ).T
     P_prd = 0.1 * np.eye(4)
 
-    for deltaAT in aT:
+    for t in T:
 
         # Corrector with K=0 (no update)
         X_hat = X_prd
         P_hat = P_prd
 
         # Measurements
-        if deltaAT >= aisData["time"][k]:
+        if t >= aisData["time"][k]:
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -49,11 +50,12 @@ def extended_kalman(aisData):
             if k < len(aisData["time"]) - 1:
                 k += 1
             else:
-                break
+                continue
 
         # Store simulation data: only x & y for plotting
         aX.append(X_prd.item(0))
         aY.append(X_prd.item(1))
+        aT.append(t)
 
         # Predictor (k+1)
         f_hat = np.matrix(
@@ -86,4 +88,4 @@ def extended_kalman(aisData):
         X_prd = X_hat + h * f_hat
         P_prd = PHI * P_hat * PHI.T + Q
 
-    return [aX, aY]
+    return [aX, aY, aT]

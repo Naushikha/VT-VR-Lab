@@ -9,9 +9,10 @@ def exogenous_kalman(aisData):
     aisData = copy.deepcopy(aisData)
     estFreq = 60  # in Hertz
     h = 1 / estFreq
-    aT = np.arange(0, aisData["duration"], h)
+    T = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []
+    aT = []
     k = 0
     # aisData["course"] = computeFossenChi(aisData)  # in Radians
     aisData["course"] = fixCourse(aisData)  # in Radians
@@ -51,14 +52,15 @@ def exogenous_kalman(aisData):
 
     H = np.eye(4)
 
-    for deltaAT in aT:
+    for t in T:
 
         # Store simulation data: only x & y for plotting
         aX.append(x_hat.item(0))
         aY.append(x_hat.item(1))
+        aT.append(t)
 
         # Measurements
-        if deltaAT >= aisData["time"][k]:
+        if t >= aisData["time"][k]:
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -123,7 +125,7 @@ def exogenous_kalman(aisData):
             if k < len(aisData["time"]) - 1:
                 k += 1
             else:
-                break
+                continue
 
         # Kalman filter model
         X_prd = np.matrix([x_prd, y_prd, U_prd, chi_prd]).T
@@ -171,4 +173,4 @@ def exogenous_kalman(aisData):
         a = a + (a_c - a) / T_a
         r = r + (r_c - r) / T_r
 
-    return [aX, aY]
+    return [aX, aY, aT]

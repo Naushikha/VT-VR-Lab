@@ -23,9 +23,10 @@ def unscented_kalman(aisData):
     aisData["course"] = course2Rad(aisData)  # in Radians
     estFreq = 60  # in Hertz
     h = 1 / estFreq
-    aT = np.arange(0, aisData["duration"], 1 / estFreq)
+    T = np.arange(0, aisData["duration"], 1 / estFreq)
     aX = []
     aY = []
+    aT = []
     k = 0
     # x, y, course, speed, yaw rate , acceleration
     q = np.diag([0.01, 0.01, 0.1, 0.1, 0, 0])
@@ -43,17 +44,19 @@ def unscented_kalman(aisData):
         ]
     )
 
-    for deltaAT in aT:
-        if deltaAT >= aisData["time"][k]:
+    for t in T:
+        if t >= aisData["time"][k]:
             measure = np.array(
-                [0, 0, aisData["course"][k], aisData["speed"][k]]).reshape(-1, 1)
+                [0, 0, aisData["course"][k], aisData["speed"][k]]
+            ).reshape(-1, 1)
             if k < len(aisData["time"]) - 1:
                 k += 1
             else:
-                break
+                continue
         state_estimator.predict(h)
         state_estimator.update(measure, r_matrix)
         estiList = state_estimator.get_state()
         aX.append(estiList[0][0])
         aY.append(estiList[1][0])
-    return [aX, aY]
+        aT.append(t)
+    return [aX, aY, aT]

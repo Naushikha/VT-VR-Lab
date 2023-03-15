@@ -403,17 +403,18 @@ class P2_Cubic:  # predicting with two AIS reports
 def own_algo(aisData):
     estFreq = 60  # in Hertz
     h = 1 / estFreq
-    aT = np.arange(0, aisData["duration"], h)
+    T = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []
+    aT = []
     k = 0
     aisReports = []  # Max 3 reports
     vesselState = VesselState(0, 0, 0, 0)  # Store vessel state
     predictors = []  # Max 2 predictors: to blend (prev and current)
     reportingTime = 0
     tSinceLastReport = 0
-    for deltaAT in aT:
-        if deltaAT >= aisData["time"][k]:
+    for t in T:
+        if t >= aisData["time"][k]:
             aisReport = AISReport(
                 aisData["time"][k],
                 aisData["x"][k],
@@ -441,7 +442,7 @@ def own_algo(aisData):
             if k < len(aisData["time"]) - 1:
                 k += 1
             else:
-                break
+                continue
         stateFinal = None
         if len(predictors) == 2:
             stateOld = predictors[0].predict(h)
@@ -469,5 +470,6 @@ def own_algo(aisData):
             # print(stateFinal.position)
             aX.append(stateFinal.posX)
             aY.append(stateFinal.posY)
+            aT.append(t)
         tSinceLastReport += h
-    return [aX, aY]
+    return [aX, aY, aT]

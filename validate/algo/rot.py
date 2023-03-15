@@ -5,31 +5,38 @@ import numpy as np
 def rate_turn(aisData):
     estFreq = 60  # in Hertz
     h = 1 / estFreq
-    aT = np.arange(0, aisData["duration"], h)
+    T = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []
+    aT = []
     k = 0
     lSpeed = 0  # last known avail. speed
     lCourse = 0  # last known avail. course
     lRateOfTurn = 0
     tSinceL = 0  # time since last known
     firstAIS = True
-    for deltaAT in aT:
-        if deltaAT >= aisData["time"][k]:
+    for t in T:
+        if t >= aisData["time"][k]:
             tDelta = tSinceL
             tSinceL = 0
             pCourse = lCourse  # Previous course
             aX.append(aisData["x"][k])
             aY.append(aisData["y"][k])
+            aT.append(t)
             # print(aisData["x"][k], aisData["y"][k])
             lSpeed = aisData["speed"][k]
             lCourse = aisData["course"][k]
             if not firstAIS:
-                lRateOfTurn = (lCourse - pCourse) / tDelta
+                try:
+                    lRateOfTurn = (lCourse - pCourse) / tDelta
+                except:
+                    lRateOfTurn = 0
             if firstAIS:
                 firstAIS = False
             if k < len(aisData["time"]) - 1:
                 k += 1
+            else:
+                continue
         # print(tSinceL)
         aX.append(
             aX[-1]
@@ -39,5 +46,6 @@ def rate_turn(aisData):
             aY[-1]
             + lSpeed * math.cos(math.radians(lCourse + lRateOfTurn * tSinceL)) * h
         )
+        aT.append(t)
         tSinceL += h
-    return [aX, aY]
+    return [aX, aY, aT]

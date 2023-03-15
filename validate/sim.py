@@ -12,56 +12,64 @@ from algo.rot import rate_turn
 from trials.zigzag import zigZagTrial
 from trials.circle import circleTrial
 
-X, Y, aisData = zigZagTrial()
-# X, Y, aisData = circleTrial()
+X, Y, T, aisData = zigZagTrial()
+# X, Y, T, aisData = circleTrial()
 
 fig, ax = plt.subplots(figsize=(14, 8))
 graphList = []
 algoList = []
 
 
-def calcAccuracy(algo, aX, aY):
+def calcAccuracy(algo, aX, aY, aT):
     # https://stackoverflow.com/a/6723457
-    sumOfSq = 0
-    sumOfDiff = 0
-    for i in range(len(X)):
-        algoY = np.interp(X[i], aX, aY)
-        sumOfSq += (algoY - Y[i]) ** 2
-        sumOfDiff += abs(algoY - Y[i])
-    print(algo, " : Sum of Squares : ", sumOfSq)
-    print(algo, " : Sum of Differences : ", sumOfDiff)
-    print(algo, " : Mean Difference : ", sumOfDiff / len(X))
+    XsumOfSq = 0
+    XsumOfDiff = 0
+    YsumOfSq = 0
+    YsumOfDiff = 0
+    for i in range(len(T)):
+        algoX = np.interp(T[i], aT, aX)
+        algoY = np.interp(T[i], aT, aY)
+        XsumOfSq += (algoX - X[i]) ** 2
+        YsumOfSq += (algoY - Y[i]) ** 2
+        XsumOfDiff += abs(algoX - X[i])
+        YsumOfDiff += abs(algoY - Y[i])
+    # print(algo, " : Sum of Squares : ", XsumOfSq)
+    # print(algo, " : Sum of Differences : ", XsumOfDiff)
+    XmeanDiff = XsumOfDiff / len(T)
+    YmeanDiff = YsumOfDiff / len(T)
+    meanDiff = (XmeanDiff + YmeanDiff) / 2
+    print(algo, " : Mean Difference : ", meanDiff)
 
 
 def plot_algo(algo="DR"):
     startTime = time.time()
     if algo == "DR":
-        aX, aY = dead_reckoning(aisData)
+        aX, aY, aT = dead_reckoning(aisData)
         algoList.append("Dead Reckoning")
     if algo == "EKF":
-        aX, aY = extended_kalman(aisData)
+        aX, aY, aT = extended_kalman(aisData)
         algoList.append("Extended Kalman Filter")
     if algo == "XKF":
-        aX, aY = exogenous_kalman(aisData)
+        aX, aY, aT = exogenous_kalman(aisData)
         algoList.append("Exogenous Kalman Filter")
     if algo == "UKF":
-        aX, aY = unscented_kalman(aisData)
+        aX, aY, aT = unscented_kalman(aisData)
         algoList.append("Unscented Kalman Filter")
     if algo == "PVB":
-        aX, aY = projective_velocity_blending(aisData)
+        aX, aY, aT = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
     if algo == "OWN":
-        aX, aY = own_algo(aisData)
+        aX, aY, aT = own_algo(aisData)
         algoList.append("Own Algo")
     if algo == "ROT":
-        aX, aY = rate_turn(aisData)
+        aX, aY, aT = rate_turn(aisData)
         algoList.append("DR + Rate of Turn")
     endTime = time.time()
     (tmpGraph,) = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
-    calcAccuracy(algo, aX, aY)
+    calcAccuracy(algo, aX, aY, aT)
     algoTime = endTime - startTime
-    print(algo, " : Processing Time : ", algoTime)
+    print(algo, " : Processing Time : ", algoTime, "s")
 
 
 (tmpGraph,) = ax.plot(X, Y)
@@ -69,9 +77,9 @@ graphList.append(tmpGraph)
 (tmpGraph,) = ax.plot(aisData["x"], aisData["y"], "ro")
 graphList.append(tmpGraph)
 plot_algo("DR")
-# plot_algo("EKF")
-# plot_algo("XKF")
-# plot_algo("UKF")
+plot_algo("EKF")
+plot_algo("XKF")
+plot_algo("UKF")
 plot_algo("ROT")
 plot_algo("PVB")
 plot_algo("OWN")
