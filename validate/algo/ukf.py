@@ -33,7 +33,23 @@ def unscented_kalman(aisData):
     # yaw rate, acceleration, course, speed
     r_matrix = np.diag([1, 1, 0.001, 0.01])
     state_estimator = UKF(
-        6, q, np.zeros((6, 1)), 0.0001 * np.eye(6), 0.04, 0.0, 2.0, iterate_x
+        6,
+        q,
+        np.matrix(
+            [
+                aisData["x"][0],
+                aisData["y"][0],
+                aisData["course"][0],
+                aisData["speed"][0],
+                0,
+                0,
+            ]
+        ).T,
+        0.0001 * np.eye(6),
+        0.04,
+        0.0,
+        2.0,
+        iterate_x,
     )
     state_estimator.modStates(
         [
