@@ -268,6 +268,67 @@ class P3:  # predicting with three AIS reports
         return self.state
 
 
+def solveQuad2(p1, p2, t1, t2):
+    x1, y1 = p1
+    x2, y2 = p2
+    A = np.array([[x1**2, x1, 1], [x2**2, x2, 1], [2 * x1, 1, 0], [2 * x2, 1, 0]])
+    b = np.array([y1, y2, t1, t2])
+    x = np.linalg.lstsq(A, b, rcond=None)[0]
+    a, b, c = x[0], x[1], x[2]
+    return [a, b, c]
+
+
+class P2_Quad:  # predicting with two AIS reports
+    state = VesselState(0, 0, 0, 0)
+    quadCoefX = []
+    quadCoefY = []
+    quadTime = 0
+
+    def __init__(self, aisReports):
+        self.state = VesselState(
+            aisReports[1].posX,
+            aisReports[1].posY,
+            aisReports[1].speed,
+            math.radians(aisReports[1].course),
+        )
+        self.quadTime = aisReports[1].time
+        # Calculate tangents
+        tanX1 = aisReports[0].speed * math.sin(math.radians(aisReports[0].course))
+        tanX2 = aisReports[1].speed * math.sin(math.radians(aisReports[1].course))
+        tanY1 = aisReports[0].speed * math.cos(math.radians(aisReports[0].course))
+        tanY2 = aisReports[1].speed * math.cos(math.radians(aisReports[1].course))
+        self.quadCoefX = solveQuad2(
+            [aisReports[0].time, aisReports[0].posX],
+            [aisReports[1].time, aisReports[1].posX],
+            tanX1,
+            tanX2,
+        )
+        self.quadCoefY = solveQuad2(
+            [aisReports[0].time, aisReports[0].posY],
+            [aisReports[1].time, aisReports[1].posY],
+            tanY1,
+            tanY2,
+        )
+
+    def predict(self, tDelta):
+        self.quadTime += tDelta
+        posXNext = (
+            self.quadCoefX[0] * self.quadTime**2
+            + self.quadCoefX[1] * self.quadTime
+            + self.quadCoefX[2]
+        )
+        posYNext = (
+            self.quadCoefY[0] * self.quadTime**2
+            + self.quadCoefY[1] * self.quadTime
+            + self.quadCoefY[2]
+        )
+        speedNext = self.state.speed  # no update to speed
+        courseNext = 0
+        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        self.state = stateNext
+        return self.state
+
+
 def solveCubic(p1, p2, t1, t2):
     x1, y1 = p1
     x2, y2 = p2
@@ -369,7 +430,7 @@ def own_algo(aisData):
             if len(aisReports) == 1:
                 predictors.append(P1(aisReports))
             elif len(aisReports) == 2:
-                predictors.append(P2_Cubic(aisReports))
+                predictors.append(P2_Quad(aisReports))
             # elif len(aisReports) == 3:
             #     try:
             #         predictors.append(P3(aisReports))
