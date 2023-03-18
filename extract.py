@@ -1,4 +1,5 @@
 from pyais import decode
+from pprint import pprint
 import utils, export
 
 fileName = "data/2022-11-16.csv"
@@ -56,14 +57,14 @@ def customFilter(msg):
 
 # Default filter (positional reports only) >> Custom filter
 filteredAIS = utils.filter(AISMessages)
-filteredAIS = utils.filter(filteredAIS, customFilter)
+# filteredAIS = utils.filter(filteredAIS, customFilter)
 
 
 # utils.printMapBounds(filteredAIS)
 # export.writeCSVForUnreal(filteredAIS)
 # export.writeCSVForOctave(filteredAIS)
-# utils.printTimeDifferenceList(filteredAIS)
-# utils.printVesselList(filteredAIS)
+# pprint(utils.getTimeDifferenceList(filteredAIS))
+# pprint(utils.getVesselList(filteredAIS))
 
 # originLat = 6.955879
 # originLon = 79.844690
@@ -73,6 +74,49 @@ filteredAIS = utils.filter(filteredAIS, customFilter)
 # print(utils.computeFlatY(testLat))
 # print(utils.approximateFlatX(testLon))
 # print(utils.approximateFlatY(testLat))
+
+vessels = utils.getVesselList(filteredAIS)
+
+
+vesselMMSI = 0
+
+
+def vesselFilter(msg):
+    # if msg["heading"] == 511:
+    #     return False
+    if msg["mmsi"] == vesselMMSI:
+        return True
+    return False
+
+
+vesselReports = {}
+vesselTimeDiffList = {}
+vesselTrialRating = {}
+
+
+def getTrialRating(timeDiffList):
+    rating = 0
+    for timeDiff in timeDiffList:
+        if 0 <= timeDiff and timeDiff <= 60:
+            rating += 1
+    return rating
+
+
+for vessel in vessels:
+    vesselMMSI = vessel
+    vesselAISReports = utils.filter(filteredAIS, vesselFilter)
+    startTime = int(vesselAISReports[0]["epoch_time"])
+    for vesselAISReport in vesselAISReports:
+        vesselAISReport["epoch_time"] = int(vesselAISReport["epoch_time"]) - startTime
+    timeDiffList = utils.getTimeDifferenceList(vesselAISReports)
+    avgReportingInterval = sum(timeDiffList) / len(timeDiffList)
+    vesselReports[vesselMMSI] = vesselAISReports
+    vesselTimeDiffList[vesselMMSI] = timeDiffList
+    vesselTrialRating[vesselMMSI] = getTrialRating(timeDiffList)
+    # export.writeCSVForOctave(vesselAISReports, f"vessel_{vesselMMSI}")
+
+sortedVesselTrialRating = sorted(vesselTrialRating.items(), key=lambda x: x[1])
+pprint(sortedVesselTrialRating)
 
 # References:
 # https://pyais.readthedocs.io/en/latest/messages.html

@@ -16,21 +16,24 @@ def filter(msgDictList, filterFunc=defaultFilter):
     return filteredMsgs
 
 
-def printTimeDifferenceList(msgDictList):
+def getTimeDifferenceList(msgDictList):
     prevTime = 0
     currTime = 0
+    timeDiffList = []
     for msg in msgDictList:
         prevTime = currTime
         currTime = int(msg["epoch_time"])
         delta = currTime - prevTime
-        print(delta)
+        timeDiffList.append(delta)
+    return timeDiffList
 
 
-def printVesselList(msgDictList):
+def getVesselList(msgDictList):
     vesselSet = set()
     for msg in msgDictList:
         vesselSet.add(msg["mmsi"])
-    print(*sorted(vesselSet), sep="\n")
+    vessels = sorted(vesselSet)
+    return vessels
 
 
 def printMapBounds(msgDictList):
