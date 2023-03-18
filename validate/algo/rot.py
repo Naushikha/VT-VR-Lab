@@ -17,6 +17,8 @@ def rate_turn(aisData):
     firstAIS = True
     for t in T:
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             tDelta = tSinceL
             tSinceL = 0
             pCourse = lCourse  # Previous course
@@ -33,10 +35,7 @@ def rate_turn(aisData):
                     lRateOfTurn = 0
             if firstAIS:
                 firstAIS = False
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
         # print(tSinceL)
         aX.append(
             aX[-1]

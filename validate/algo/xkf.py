@@ -61,6 +61,8 @@ def exogenous_kalman(aisData):
 
         # Measurements
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -122,10 +124,7 @@ def exogenous_kalman(aisData):
             U_prd = U_prd + h * K3 * (U_k - U_prd)
             chi_prd = chi_prd + h * K4 * wrapToPi(chi_k - chi_prd)
 
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
 
         # Kalman filter model
         X_prd = np.matrix([x_prd, y_prd, U_prd, chi_prd]).T

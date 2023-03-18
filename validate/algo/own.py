@@ -232,6 +232,8 @@ def own_algo(aisData):
     tSinceLastReport = 0
     for t in T:
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             aisReport = AISReport(
                 aisData["time"][k],
                 aisData["x"][k],
@@ -251,10 +253,7 @@ def own_algo(aisData):
                 predictors.append(P2_Quad(aisReports))
             reportingTime = tSinceLastReport
             tSinceLastReport = 0  # reset timer
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
         stateFinal = None
         if len(predictors) == 2:
             stateOld = predictors[0].predict(h)

@@ -62,13 +62,12 @@ def unscented_kalman(aisData):
 
     for t in T:
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             measure = np.array(
                 [0, 0, aisData["course"][k], aisData["speed"][k]]
             ).reshape(-1, 1)
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
         state_estimator.predict(h)
         state_estimator.update(measure, r_matrix)
         estiList = state_estimator.get_state()

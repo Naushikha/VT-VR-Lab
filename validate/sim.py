@@ -39,6 +39,9 @@ def calcAccuracy(algo, aX, aY, aT):
     YmeanDiff = YsumOfDiff / len(T)
     meanDiff = (XmeanDiff + YmeanDiff) / 2
     print(algo, " : Mean Difference : ", meanDiff)
+    # print(algo, " : X sum : ", XsumOfDiff)
+    # print(algo, " : Y sum : ", YsumOfDiff)
+    # print(algo, " : T : ", len(T))
 
 
 def plot_algo(algo="DR"):

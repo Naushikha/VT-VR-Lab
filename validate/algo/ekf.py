@@ -32,6 +32,8 @@ def extended_kalman(aisData):
 
         # Measurements
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -47,10 +49,7 @@ def extended_kalman(aisData):
             X_hat = X_prd + K * eps
             P_hat = (np.eye(4) - K) * P_prd * (np.eye(4) - K).T + K * R * K.T
 
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
 
         # Store simulation data: only x & y for plotting
         aX.append(X_prd.item(0))

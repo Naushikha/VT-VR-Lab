@@ -13,15 +13,14 @@ def dead_reckoning(aisData):
     lCourse = 0  # latest avail. course
     for t in T:
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             aX.append(aisData["x"][k])
             aY.append(aisData["y"][k])
             aT.append(t)
             lSpeed = aisData["speed"][k]
             lCourse = aisData["course"][k]
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
         else:
             aX.append(aX[-1] + lSpeed * math.sin(math.radians(lCourse)) * (1 / estFreq))
             aY.append(aY[-1] + lSpeed * math.cos(math.radians(lCourse)) * (1 / estFreq))

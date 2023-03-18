@@ -25,6 +25,8 @@ def projective_velocity_blending(aisData):
 
     for t in T:
         if t >= aisData["time"][k]:
+            if k >= len(aisData["time"]) - 1:
+                continue
             # for pvb
             if posList:
                 oPos = posList[-1]
@@ -49,10 +51,7 @@ def projective_velocity_blending(aisData):
             )
             # for dr
             posList.append(lPos)
-            if k < len(aisData["time"]) - 1:
-                k += 1
-            else:
-                continue
+            k += 1
         # else:
         # # DR
         # nPos = posList[-1] + lVelocity * h + (1/2 * lAccel * h**2)
