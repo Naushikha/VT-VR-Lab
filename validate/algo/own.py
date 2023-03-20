@@ -217,6 +217,149 @@ class P2_Cubic:  # predicting with two AIS reports
         return self.state
 
 
+def solveQuad3P(p1, p2, p3):
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    matForInv = np.matrix(
+        [
+            [x1**2, x1, 1],
+            [x2**2, x2, 1],
+            [x3**2, x3, 1],
+        ]
+    )
+    matInv = np.linalg.inv(matForInv)
+    matDep = np.matrix([y1, y2, y3]).T
+    quadraticCoef = matInv * matDep
+    quadraticCoef = quadraticCoef.A1
+    return quadraticCoef
+
+
+class P3_Quad:  # predicting with three AIS reports
+    state = VesselState(0, 0, 0, 0)
+    quadCoefX = []
+    quadCoefY = []
+    quadTime = 0
+
+    def __init__(self, aisReports):
+        self.state = VesselState(
+            aisReports[2].posX,
+            aisReports[2].posY,
+            aisReports[2].speed,
+            math.radians(aisReports[2].course),
+        )
+        self.quadCoefX = solveQuad3P(
+            [aisReports[0].time, aisReports[0].posX],
+            [aisReports[1].time, aisReports[1].posX],
+            [aisReports[2].time, aisReports[2].posX],
+        )
+        self.quadCoefY = solveQuad3P(
+            [aisReports[0].time, aisReports[0].posY],
+            [aisReports[1].time, aisReports[1].posY],
+            [aisReports[2].time, aisReports[2].posY],
+        )
+        self.quadTime = aisReports[2].time
+
+    def predict(self, tDelta):
+        self.quadTime += tDelta
+        posXNext = (
+            self.quadCoefX[0] * self.quadTime**2
+            + self.quadCoefX[1] * self.quadTime
+            + self.quadCoefX[2]
+        )
+        posYNext = (
+            self.quadCoefY[0] * self.quadTime**2
+            + self.quadCoefY[1] * self.quadTime
+            + self.quadCoefY[2]
+        )
+        speedNext = self.state.speed  # no update to speed
+        courseNext = 0
+        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        self.state = stateNext
+        return self.state
+
+
+def point2angle(p):
+    x, y = p
+    if x > 0 and y >= 0:
+        angle = math.atan(y / x)
+    elif x > 0 and y < 0:
+        angle = math.atan(y / x) + 2 * math.pi
+    elif x < 0:
+        angle = math.atan(y / x) + math.pi
+    elif x == 0 and y > 0:
+        angle = math.pi / 2
+    elif x == 0 and y < 0:
+        angle = 3 * math.pi / 2
+    else:
+        angle = 0
+    return math.degrees(angle)
+
+
+def transformPoint(p, angle):
+    x, y = p
+    theta = math.radians(angle)
+    x1 = x * math.cos(theta) - y * math.sin(theta)
+    y1 = x * math.sin(theta) + y * math.cos(theta)
+    return x1, y1
+
+
+class P3_Quad_CoordTransform:  # predicting with three AIS reports
+    state = VesselState(0, 0, 0, 0)
+    transState = VesselState(0, 0, 0, 0)
+    transAngle = 0
+    transQuadCoef = []
+
+    def __init__(self, aisReports):
+        self.state = VesselState(
+            aisReports[2].posX,
+            aisReports[2].posY,
+            aisReports[2].speed,
+            math.radians(aisReports[2].course),
+        )
+        # Consider Point-1 as origin and calculate vector to Point-3: Vector[1->3]
+        VecX = aisReports[2].posX - aisReports[0].posX
+        VecY = aisReports[2].posY - aisReports[0].posY
+        transAngle = point2angle([VecX, VecY])
+        # Transform coordinates to coincide Vector[1->3] with Positive X-axis
+        p1 = transformPoint([aisReports[0].posX, aisReports[0].posY], -transAngle)
+        p2 = transformPoint([aisReports[1].posX, aisReports[1].posY], -transAngle)
+        p3 = transformPoint([aisReports[2].posX, aisReports[2].posY], -transAngle)
+        # Check if Point-2 lies in between Point-1 and Point-3
+        if not (p1[0] < p2[0] and p2[0] < p3[0]):
+            raise Exception("Point-2 is not between Point-1 and Point-3")
+            # Quad prediction not possible, fallback to another mode of prediction?
+        transQuadCoef = solveQuad3P(p1, p2, p3)
+        gradient = 2 * transQuadCoef[0] * p3[0] + transQuadCoef[1]
+        transCourse = math.atan(gradient)  # is relative to the x-axis
+        self.transState = VesselState(p3[0], p3[1], aisReports[2].speed, transCourse)
+        self.transAngle = transAngle
+        self.transQuadCoef = transQuadCoef
+
+    def predict(self, tDelta):
+        posXNext = (
+            self.transState.posX
+            + self.transState.speed * math.cos(self.transState.course) * tDelta
+        )
+        posYNext = (
+            self.transQuadCoef[0] * posXNext**2
+            + self.transQuadCoef[1] * posXNext
+            + self.transQuadCoef[2]
+        )
+        speedNext = self.state.speed  # no update to speed
+        gradient = 2 * self.transQuadCoef[0] * posXNext + self.transQuadCoef[1]
+        courseNext = math.atan(gradient)
+        transStateNext = VesselState(
+            posXNext, posYNext, speedNext, courseNext
+        )  # future state
+        # transform back
+        posXNext, posYNext = transformPoint([posXNext, posYNext], self.transAngle)
+        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        self.transState = transStateNext  # advance state
+        self.state = stateNext
+        return self.state
+
+
 def own_algo(aisData):
     estFreq = 60  # in Hertz
     h = 1 / estFreq
@@ -241,7 +384,7 @@ def own_algo(aisData):
                 aisData["speed"][k],
                 aisData["course"][k],
             )
-            if len(aisReports) == 2:  # Only keep last 3 reports
+            if len(aisReports) == 3:  # Only keep last 3 reports
                 aisReports.pop(0)
             aisReports.append(aisReport)
             # Init predictors
@@ -251,6 +394,8 @@ def own_algo(aisData):
                 predictors.append(P1(aisReports))
             elif len(aisReports) == 2:
                 predictors.append(P2_Quad(aisReports))
+            elif len(aisReports) == 3:
+                predictors.append(P3_Quad_CoordTransform(aisReports))
             reportingTime = tSinceLastReport
             tSinceLastReport = 0  # reset timer
             k += 1
