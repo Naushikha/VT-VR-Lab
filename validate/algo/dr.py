@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from .utils import calcTrajectoryError
 
 
 def dead_reckoning(aisData):
@@ -8,6 +9,7 @@ def dead_reckoning(aisData):
     aX = []
     aY = []
     aT = []
+    aE = []
     k = 0
     lSpeed = 0  # latest avail. speed
     lCourse = 0  # latest avail. course
@@ -15,6 +17,7 @@ def dead_reckoning(aisData):
         if t >= aisData["time"][k]:
             if k >= len(aisData["time"]) - 1:
                 continue
+            calcTrajectoryError(aE, aX, aY, aisData["x"][k], aisData["y"][k])
             aX.append(aisData["x"][k])
             aY.append(aisData["y"][k])
             aT.append(t)
@@ -25,4 +28,4 @@ def dead_reckoning(aisData):
             aX.append(aX[-1] + lSpeed * math.sin(math.radians(lCourse)) * (1 / estFreq))
             aY.append(aY[-1] + lSpeed * math.cos(math.radians(lCourse)) * (1 / estFreq))
             aT.append(t)
-    return [aX, aY, aT]
+    return [aX, aY, aT, aE]

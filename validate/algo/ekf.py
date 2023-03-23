@@ -2,6 +2,7 @@ import math
 import copy
 import numpy as np
 from .utils import computeFossenChi, wrapToPi, fixCourse
+from .utils import calcTrajectoryError
 
 
 def extended_kalman(aisData):
@@ -13,6 +14,7 @@ def extended_kalman(aisData):
     aX = []
     aY = []
     aT = []
+    aE = []
     k = 0
     # aisData["course"] = computeFossenChi(aisData)  # in Radians
     aisData["course"] = fixCourse(aisData)  # in Radians
@@ -34,6 +36,7 @@ def extended_kalman(aisData):
         if t >= aisData["time"][k]:
             if k >= len(aisData["time"]) - 1:
                 continue
+            calcTrajectoryError(aE, aX, aY, aisData["x"][k], aisData["y"][k])
             x_k = aisData["x"][k]
             y_k = aisData["y"][k]
             U_k = aisData["speed"][k]
@@ -87,4 +90,4 @@ def extended_kalman(aisData):
         X_prd = X_hat + h * f_hat
         P_prd = PHI * P_hat * PHI.T + Q
 
-    return [aX, aY, aT]
+    return [aX, aY, aT, aE]

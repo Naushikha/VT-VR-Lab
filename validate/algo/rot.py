@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from .utils import calcTrajectoryError
 
 
 def rate_turn(aisData):
@@ -9,6 +10,7 @@ def rate_turn(aisData):
     aX = []
     aY = []
     aT = []
+    aE = []
     k = 0
     lSpeed = 0  # last known avail. speed
     lCourse = 0  # last known avail. course
@@ -19,6 +21,7 @@ def rate_turn(aisData):
         if t >= aisData["time"][k]:
             if k >= len(aisData["time"]) - 1:
                 continue
+            calcTrajectoryError(aE, aX, aY, aisData["x"][k], aisData["y"][k])
             tDelta = tSinceL
             tSinceL = 0
             pCourse = lCourse  # Previous course
@@ -47,4 +50,4 @@ def rate_turn(aisData):
         )
         aT.append(t)
         tSinceL += h
-    return [aX, aY, aT]
+    return [aX, aY, aT, aE]

@@ -44,33 +44,46 @@ def calcAccuracy(algo, aX, aY, aT):
     # print(algo, " : T : ", len(T))
 
 
+def calcTrajectoryAccuracy(algo, aE):
+    XsumOfDiff = 0
+    YsumOfDiff = 0
+    for e in aE:
+        XsumOfDiff += e[0]
+        YsumOfDiff += e[1]
+    XmeanDiff = XsumOfDiff / len(aE)
+    YmeanDiff = YsumOfDiff / len(aE)
+    meanDiff = (XmeanDiff + YmeanDiff) / 2
+    print(algo, " : Mean Trajectory Difference : ", meanDiff)
+
+
 def plot_algo(algo="DR"):
     startTime = time.time()
     if algo == "DR":
-        aX, aY, aT = dead_reckoning(aisData)
+        aX, aY, aT, aE = dead_reckoning(aisData)
         algoList.append("Dead Reckoning")
     if algo == "EKF":
-        aX, aY, aT = extended_kalman(aisData)
+        aX, aY, aT, aE = extended_kalman(aisData)
         algoList.append("Extended Kalman Filter")
     if algo == "XKF":
-        aX, aY, aT = exogenous_kalman(aisData)
+        aX, aY, aT, aE = exogenous_kalman(aisData)
         algoList.append("Exogenous Kalman Filter")
     if algo == "UKF":
-        aX, aY, aT = unscented_kalman(aisData)
+        aX, aY, aT, aE = unscented_kalman(aisData)
         algoList.append("Unscented Kalman Filter")
     if algo == "PVB":
-        aX, aY, aT = projective_velocity_blending(aisData)
+        aX, aY, aT, aE = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
     if algo == "OWN":
-        aX, aY, aT = own_algo(aisData)
+        aX, aY, aT, aE = own_algo(aisData)
         algoList.append("Own Algo")
     if algo == "ROT":
-        aX, aY, aT = rate_turn(aisData)
+        aX, aY, aT, aE = rate_turn(aisData)
         algoList.append("DR + Rate of Turn")
     endTime = time.time()
     (tmpGraph,) = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
     calcAccuracy(algo, aX, aY, aT)
+    calcTrajectoryAccuracy(algo, aE)
     algoTime = endTime - startTime
     print(algo, " : Processing Time : ", algoTime, "s")
 
@@ -80,11 +93,11 @@ graphList.append(tmpGraph)
 (tmpGraph,) = ax.plot(aisData["x"], aisData["y"], "ro")
 graphList.append(tmpGraph)
 plot_algo("DR")
-plot_algo("EKF")
-plot_algo("XKF")
-plot_algo("UKF")
+# plot_algo("EKF")
+# plot_algo("XKF")
+# plot_algo("UKF")
 plot_algo("ROT")
-plot_algo("PVB")
+# plot_algo("PVB")
 plot_algo("OWN")
 
 legendList = ["True Path", "AIS Report"]

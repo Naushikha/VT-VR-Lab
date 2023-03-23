@@ -4,6 +4,7 @@ import numpy as np
 
 from .libUKF import UKF
 from .utils import course2Rad
+from .utils import calcTrajectoryError
 
 
 def iterate_x(x_in, timestep):
@@ -27,6 +28,7 @@ def unscented_kalman(aisData):
     aX = []
     aY = []
     aT = []
+    aE = []
     k = 0
     # x, y, course, speed, yaw rate , acceleration
     q = np.diag([0.01, 0.01, 0.1, 0.1, 0, 0])
@@ -64,6 +66,7 @@ def unscented_kalman(aisData):
         if t >= aisData["time"][k]:
             if k >= len(aisData["time"]) - 1:
                 continue
+            calcTrajectoryError(aE, aX, aY, aisData["x"][k], aisData["y"][k])
             measure = np.array(
                 [0, 0, aisData["course"][k], aisData["speed"][k]]
             ).reshape(-1, 1)
@@ -74,4 +77,4 @@ def unscented_kalman(aisData):
         aX.append(estiList[0][0])
         aY.append(estiList[1][0])
         aT.append(t)
-    return [aX, aY, aT]
+    return [aX, aY, aT, aE]

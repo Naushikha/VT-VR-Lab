@@ -35,3 +35,12 @@ def course2Rad(aisData):
     for course in aisData["course"]:
         correctedCourse.append(wrapToPi(math.radians(course)))
     return correctedCourse
+
+
+def calcTrajectoryError(errList, aX, aY, aisX, aisY):
+    try:
+        errX = abs(aX[-1] - aisX)
+        errY = abs(aY[-1] - aisY)
+        errList.append([errX, errY])
+    except:
+        pass

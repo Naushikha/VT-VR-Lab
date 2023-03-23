@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from .utils import calcTrajectoryError
 
 
 class AISReport:
@@ -367,6 +368,7 @@ def own_algo(aisData):
     aX = []
     aY = []
     aT = []
+    aE = []
     k = 0
     aisReports = []  # Max 3 reports
     vesselState = VesselState(0, 0, 0, 0)  # Store vessel state
@@ -377,6 +379,7 @@ def own_algo(aisData):
         if t >= aisData["time"][k]:
             if k >= len(aisData["time"]) - 1:
                 continue
+            calcTrajectoryError(aE, aX, aY, aisData["x"][k], aisData["y"][k])
             aisReport = AISReport(
                 aisData["time"][k],
                 aisData["x"][k],
@@ -384,7 +387,7 @@ def own_algo(aisData):
                 aisData["speed"][k],
                 aisData["course"][k],
             )
-            if len(aisReports) == 3:  # Only keep last 3 reports
+            if len(aisReports) == 1:  # Only keep last 3 reports
                 aisReports.pop(0)
             aisReports.append(aisReport)
             # Init predictors
@@ -395,7 +398,7 @@ def own_algo(aisData):
             elif len(aisReports) == 2:
                 predictors.append(P2_Quad(aisReports))
             elif len(aisReports) == 3:
-                predictors.append(P3_Quad_CoordTransform(aisReports))
+                predictors.append(P3_Quad(aisReports))
             reportingTime = tSinceLastReport
             tSinceLastReport = 0  # reset timer
             k += 1
@@ -428,4 +431,4 @@ def own_algo(aisData):
             aY.append(stateFinal.posY)
             aT.append(t)
         tSinceLastReport += h
-    return [aX, aY, aT]
+    return [aX, aY, aT, aE]

@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from .utils import calcTrajectoryError
 
 
 def projective_velocity_blending(aisData):
@@ -9,6 +10,7 @@ def projective_velocity_blending(aisData):
     aX = []
     aY = []
     aT = []
+    aE = []
     posList = []  # all (x, y) positions
     k = 0
     lPos = np.array([0, 0])  # last known position
@@ -27,6 +29,7 @@ def projective_velocity_blending(aisData):
         if t >= aisData["time"][k]:
             if k >= len(aisData["time"]) - 1:
                 continue
+            calcTrajectoryError(aE, aX, aY, aisData["x"][k], aisData["y"][k])
             # for pvb
             if posList:
                 oPos = posList[-1]
@@ -79,4 +82,4 @@ def projective_velocity_blending(aisData):
         aY.append(posComb[1])
         aT.append(t)
 
-    return [aX, aY, aT]
+    return [aX, aY, aT, aE]
