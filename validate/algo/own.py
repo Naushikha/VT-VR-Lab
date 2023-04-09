@@ -31,6 +31,15 @@ class VesselState:
         self.course = course
 
 
+def getCourse(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    delta_x = x2 - x1
+    delta_y = y2 - y1
+    angle = math.atan2(delta_x, delta_y)
+    return angle
+
+
 class P1:  # predicting with one AIS report
     state = VesselState(0, 0, 0, 0)
 
@@ -143,7 +152,7 @@ class P2_Quad:  # predicting with two AIS reports
             + self.quadCoefY[2]
         )
         speedNext = self.state.speed  # no update to speed
-        courseNext = 0
+        courseNext = getCourse([self.state.posX, self.state.posY], [posXNext, posYNext])
         stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
         self.state = stateNext
         return self.state
@@ -212,7 +221,7 @@ class P2_Cubic:  # predicting with two AIS reports
             + self.cubicCoefY[3]
         )
         speedNext = self.state.speed  # no update to speed
-        courseNext = 0
+        courseNext = getCourse([self.state.posX, self.state.posY], [posXNext, posYNext])
         stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
         self.state = stateNext
         return self.state
@@ -274,7 +283,7 @@ class P3_Quad:  # predicting with three AIS reports
             + self.quadCoefY[2]
         )
         speedNext = self.state.speed  # no update to speed
-        courseNext = 0
+        courseNext = getCourse([self.state.posX, self.state.posY], [posXNext, posYNext])
         stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
         self.state = stateNext
         return self.state
