@@ -370,6 +370,76 @@ class P3_Quad_CoordTransform:  # predicting with three AIS reports
         return self.state
 
 
+def solveCubic4P(p1, p2, p3, p4):
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    x4, y4 = p4
+
+    matForInv = np.matrix(
+        [
+            [x1**3, x1**2, x1, 1],
+            [x2**3, x2**2, x2, 1],
+            [x3**3, x3**2, x3, 1],
+            [x4**3, x4**2, x4, 1],
+        ]
+    )
+    matInv = np.linalg.inv(matForInv)
+    matDep = np.matrix([y1, y2, y3, y4]).T
+    cubicCoef = matInv * matDep
+    cubicCoef = cubicCoef.A1
+
+    return cubicCoef
+
+
+class P4_Cubic:  # predicting with four AIS reports
+    state = VesselState(0, 0, 0, 0)
+    cubicCoefX = []
+    cubicCoefY = []
+    cubicTime = 0
+
+    def __init__(self, aisReports):
+        self.state = VesselState(
+            aisReports[3].posX,
+            aisReports[3].posY,
+            aisReports[3].speed,
+            math.radians(aisReports[3].course),
+        )
+        self.cubicCoefX = solveCubic4P(
+            [aisReports[0].time, aisReports[0].posX],
+            [aisReports[1].time, aisReports[1].posX],
+            [aisReports[2].time, aisReports[2].posX],
+            [aisReports[3].time, aisReports[3].posX],
+        )
+        self.cubicCoefY = solveCubic4P(
+            [aisReports[0].time, aisReports[0].posY],
+            [aisReports[1].time, aisReports[1].posY],
+            [aisReports[2].time, aisReports[2].posY],
+            [aisReports[3].time, aisReports[3].posY],
+        )
+        self.cubicTime = aisReports[3].time
+
+    def predict(self, tDelta):
+        self.cubicTime += tDelta
+        posXNext = (
+            self.cubicCoefX[0] * self.cubicTime**3
+            + self.cubicCoefX[1] * self.cubicTime**2
+            + self.cubicCoefX[2] * self.cubicTime
+            + self.cubicCoefX[3]
+        )
+        posYNext = (
+            self.cubicCoefY[0] * self.cubicTime**3
+            + self.cubicCoefY[1] * self.cubicTime**2
+            + self.cubicCoefY[2] * self.cubicTime
+            + self.cubicCoefY[3]
+        )
+        speedNext = self.state.speed  # no update to speed
+        courseNext = getCourse([self.state.posX, self.state.posY], [posXNext, posYNext])
+        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        self.state = stateNext
+        return self.state
+
+
 def own_algo(aisData):
     estFreq = 60  # in Hertz
     h = 1 / estFreq
@@ -408,6 +478,8 @@ def own_algo(aisData):
                 predictors.append(P2_Quad(aisReports))
             elif len(aisReports) == 3:
                 predictors.append(P3_Quad(aisReports))
+            elif len(aisReports) == 4:
+                predictors.append(P4_Cubic(aisReports))
             reportingTime = tSinceLastReport
             tSinceLastReport = 0  # reset timer
             k += 1
