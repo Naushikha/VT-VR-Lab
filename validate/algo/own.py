@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from .utils import calcTrajectoryError
+import matplotlib.pyplot as plt # For the course graph
 
 
 class AISReport:
@@ -440,7 +441,27 @@ class P4_Cubic:  # predicting with four AIS reports
         return self.state
 
 
-def own_algo(aisData):
+def pickInterpType(aisReports, config):
+    if len(aisReports) == 1:
+        return P1(aisReports)
+    elif len(aisReports) == 2:
+        if config[0]=="P2_Rot":
+            return P2_Rot(aisReports)
+        if config[0]=="P2_Quad":
+            return P2_Quad(aisReports)
+        if config[0]=="P2_Cubic":
+            return P2_Cubic(aisReports)
+        return P2_Rot(aisReports)
+    elif len(aisReports) == 3:
+        if config[0]=="P3_Quad":
+            return P3_Quad(aisReports)
+        if config[0]=="P3_QuadCT":
+            return P3_Quad_CoordTransform(aisReports)
+        return P3_Quad(aisReports)
+    elif len(aisReports) == 4:
+        return P4_Cubic(aisReports)
+
+def own_algo(aisData, config):
     estFreq = 60  # in Hertz
     h = 1 / estFreq
     T = np.arange(0, aisData["duration"], h)
@@ -448,6 +469,7 @@ def own_algo(aisData):
     aY = []
     aT = []
     aE = []
+    aC = [] # Course
     k = 0
     aisReports = []  # Max 3 reports
     vesselState = VesselState(0, 0, 0, 0)  # Store vessel state
@@ -466,20 +488,13 @@ def own_algo(aisData):
                 aisData["speed"][k],
                 aisData["course"][k],
             )
-            if len(aisReports) == 1:  # Only keep last 3 reports
+            if len(aisReports) == int(config[0][1]):  # Only keep last 3 reports
                 aisReports.pop(0)
             aisReports.append(aisReport)
             # Init predictors
             if len(predictors) == 2:  # Only keep 2 predictors
                 predictors.pop(0)
-            if len(aisReports) == 1:
-                predictors.append(P1(aisReports))
-            elif len(aisReports) == 2:
-                predictors.append(P2_Quad(aisReports))
-            elif len(aisReports) == 3:
-                predictors.append(P3_Quad(aisReports))
-            elif len(aisReports) == 4:
-                predictors.append(P4_Cubic(aisReports))
+            predictors.append(pickInterpType(aisReports, config))
             reportingTime = tSinceLastReport
             tSinceLastReport = 0  # reset timer
             k += 1
@@ -488,9 +503,9 @@ def own_algo(aisData):
             stateOld = predictors[0].predict(h)
             stateNew = predictors[1].predict(h)
             # Blend between two
-            blendEnd = 0.25
+            blendEnd = config[1] # 0.25
             blendWeight = tSinceLastReport / (reportingTime * blendEnd)
-            if blendWeight > 1:
+            if blendWeight > 1 or blendEnd == 0:
                 blendWeight = 1
             posXFinal = stateOld.posX + (stateNew.posX - stateOld.posX) * blendWeight
             posYFinal = stateOld.posY + (stateNew.posY - stateOld.posY) * blendWeight
@@ -510,6 +525,12 @@ def own_algo(aisData):
             # print(stateFinal.position)
             aX.append(stateFinal.posX)
             aY.append(stateFinal.posY)
+            aC.append(stateFinal.course)
             aT.append(t)
         tSinceLastReport += h
+    # plt.figure(2)
+    # y = np.degrees(aC)
+    # x = np.arange(len(aC))
+    # plt.plot(x, y)
+    # plt.figure(1)
     return [aX, aY, aT, aE]

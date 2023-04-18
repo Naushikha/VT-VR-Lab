@@ -103,7 +103,7 @@ def calcTrajectoryAccuracy(algo, aE):
     meanDiff = (XmeanDiff + YmeanDiff) / 2
     print(algo, " : Mean Trajectory Difference : ", meanDiff)
 
-def plot_algo(algo="DR"):
+def plot_algo(algo="DR", config=[]):
     startTime = time.time()
     if algo == "DR":
         aX, aY, aT, aE = dead_reckoning(aisData)
@@ -121,8 +121,9 @@ def plot_algo(algo="DR"):
         aX, aY, aT, aE = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
     if algo == "OWN":
-        aX, aY, aT, aE = own_algo(aisData)
-        algoList.append("Own Algo")
+        algo = f"OWN-{config[0]}-{config[1]}"
+        aX, aY, aT, aE = own_algo(aisData, config)
+        algoList.append(algo)
     if algo == "ROT":
         aX, aY, aT, aE = rate_turn(aisData)
         algoList.append("DR + Rate of Turn")
@@ -145,12 +146,25 @@ plot_algo("DR")
 # plot_algo("UKF")
 plot_algo("ROT")
 # plot_algo("PVB")
-plot_algo("OWN")
+interpolationTypeList = [
+    "P1",
+    "P2_Rot",
+    "P2_Quad",
+    "P2_Cubic",
+    "P3_Quad",
+    "P3_QuadCT",
+    "P4_Cubic",
+]
+blendingPercentageList = [0.25] # np.arange(0, 1.01, 0.25)
+for interpolationType in interpolationTypeList:
+    for blendingPercentage in blendingPercentageList:
+        config = [interpolationType, blendingPercentage]
+        plot_algo("OWN", config)
 
 legendList = ["AIS Report"]
 legendList.extend(algoList)
 
-legend = plt.legend(legendList)
+legend = plt.legend(legendList, loc='center left', bbox_to_anchor=(1, 0.5))
 plt.title("AIS Vessel Motion Simulator")
 plt.xlabel("X-Axis (m)")
 plt.ylabel("Y-Axis (m)")
