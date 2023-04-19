@@ -1,4 +1,4 @@
-from math import atan2, sin, cos, sqrt
+from math import atan2, radians, sin, cos, sqrt
 
 
 def defaultFilter(msg):
@@ -58,12 +58,12 @@ RM = RN * (1 - e**2) / commonDenom
 
 def computeFlatX(lon):
     deltaLon = lon - originLon
-    return deltaLon / atan2(1, RN * cos(originLat))
+    return radians(deltaLon) / atan2(1, RN * cos(radians(originLat)))
 
 
 def computeFlatY(lat):
     deltaLat = lat - originLat
-    return deltaLat / atan2(1, RM)
+    return radians(deltaLat) / atan2(1, RM)
 
 
 # Approximate lat lon to X, Y
