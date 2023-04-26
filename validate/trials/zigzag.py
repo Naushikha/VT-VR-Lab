@@ -5,12 +5,12 @@ from .utils import getAISReportingIntervalBySpeed, getAISDataByDist
 
 def zigZagTrial():
     trialTime = 60
-    trialDistance = 100
+    trialDistance = 300
 
-    X = np.linspace(0, trialDistance, 1000)  # in meters
+    X = np.linspace(0, trialDistance, 3000)  # in meters
     Y = []
     for x in X:
-        Y.append(math.sin(x / 15) * 20)
+        Y.append(math.sin(x / 45) * 60)
 
     trialTotalDistance = 0
     for i in range(len(X) - 1):

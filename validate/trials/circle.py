@@ -4,7 +4,7 @@ from .utils import getAISReportingIntervalBySpeed, getAISDataByDist
 
 def circleTrial():
     trialTime = 60
-    trialRadius = 100
+    trialRadius = 60
 
     trialTotalDistance = 2 * np.pi * trialRadius
     speed = trialTotalDistance / trialTime
