@@ -168,6 +168,7 @@ legend = plt.legend(legendList, loc='center left', bbox_to_anchor=(1, 0.5))
 plt.title("AIS Vessel Motion Simulator")
 plt.xlabel("X-Axis (m)")
 plt.ylabel("Y-Axis (m)")
+plt.axis("scaled")
 
 graphLegends = {}
 
