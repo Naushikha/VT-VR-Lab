@@ -1,3 +1,4 @@
+import math
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,25 +41,20 @@ def calcAccuracy(algo, aX, aY, aT):
         XsumOfDiff += abs(algoX - X[i])
         YsumOfDiff += abs(algoY - Y[i])
         aE.append((abs(algoX - X[i]) + abs(algoY - Y[i])) / 2)
-    # print(algo, " : Sum of Squares : ", XsumOfSq)
-    # print(algo, " : Sum of Differences : ", XsumOfDiff)
-    ##########
     plt.figure(3)
     x = np.arange(len(aE))
     plt.plot(x, aE, label=algo)
     plt.legend(algoList)
     plt.figure(1)
-    XmeanDiff = XsumOfDiff / len(T)
-    YmeanDiff = YsumOfDiff / len(T)
-    meanDiff = (XmeanDiff + YmeanDiff) / 2
-    # print(algo, " : Mean Difference : ", meanDiff)
-    print(meanDiff, end=",")
-    # print(algo, " : X sum : ", XsumOfDiff)
-    # print(algo, " : Y sum : ", YsumOfDiff)
-    # print(algo, " : T : ", len(T))
+    X_MAE = XsumOfDiff / len(T)
+    Y_MAE = YsumOfDiff / len(T)
+    MAE = (X_MAE + Y_MAE) / 2
+    RMSE = (math.sqrt(XsumOfSq / len(T)) + math.sqrt(YsumOfSq / len(T))) / 2
+    print(RMSE, end=",")
+    print(MAE, end=",")
 
 
-def calcTrajectoryAccuracy(algo, aE):
+def calcTeleportabilityScore(algo, aE):
     XsumOfDiff = 0
     YsumOfDiff = 0
     for e in aE:
@@ -66,9 +62,8 @@ def calcTrajectoryAccuracy(algo, aE):
         YsumOfDiff += e[1]
     XmeanDiff = XsumOfDiff / len(aE)
     YmeanDiff = YsumOfDiff / len(aE)
-    meanDiff = (XmeanDiff + YmeanDiff) / 2
-    # print(algo, " : Mean Trajectory Difference : ", meanDiff)
-    print(meanDiff, end=",")
+    telepScore = (XmeanDiff + YmeanDiff) / 2
+    print(telepScore, end=",")
 
 
 def plot_algo(algo="DR", config=[]):
@@ -100,10 +95,10 @@ def plot_algo(algo="DR", config=[]):
     (tmpGraph,) = ax.plot(aX, aY, "o:", markersize=1)
     graphList.append(tmpGraph)
     calcAccuracy(algo, aX, aY, aT)
-    calcTrajectoryAccuracy(algo, aE)
+    calcTeleportabilityScore(algo, aE)
     algoTime = endTime - startTime
-    # print(algo, " : Processing Time : ", algoTime, "s")
     print(algoTime)
+    # ALGONAME, RMSE, MAE, TELEPSCORE, TIME
 
 
 (tmpGraph,) = ax.plot(X, Y)
@@ -125,7 +120,7 @@ interpolationTypeList = [
     "P3_QuadCT",
     "P4_Cubic",
 ]
-blendingPercentageList = np.arange(0, 1.01, 0.05)
+blendingPercentageList = [0.5]  # np.arange(0, 1.01, 0.05)
 for interpolationType in interpolationTypeList:
     for blendingPercentage in blendingPercentageList:
         config = [interpolationType, blendingPercentage]
