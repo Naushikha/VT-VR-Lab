@@ -7,7 +7,7 @@ from algo.ekf import extended_kalman
 from algo.xkf import exogenous_kalman
 from algo.ukf import unscented_kalman
 from algo.pvb import projective_velocity_blending
-from algo.own import own_algo
+from algo.agb import own_algo
 from algo.rot import rate_turn
 
 aisT = []  # in seconds
@@ -121,8 +121,8 @@ def plot_algo(algo="DR", config=[]):
     if algo == "PVB":
         aX, aY, aT, aE = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
-    if algo == "OWN":
-        algo = f"OWN-{config[0]}-{config[1]}"
+    if algo == "AGB":
+        algo = f"AGB-{config[0]}-{config[1]}"
         aX, aY, aT, aE = own_algo(aisData, config)
         algoList.append(algo)
     if algo == "ROT":
@@ -160,7 +160,7 @@ blendingPercentageList = [0.25] # np.arange(0, 1.01, 0.25)
 for interpolationType in interpolationTypeList:
     for blendingPercentage in blendingPercentageList:
         config = [interpolationType, blendingPercentage]
-        plot_algo("OWN", config)
+        plot_algo("AGB", config)
 
 legendList = ["AIS Report"]
 legendList.extend(algoList)

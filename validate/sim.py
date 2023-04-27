@@ -6,7 +6,7 @@ from algo.ekf import extended_kalman
 from algo.xkf import exogenous_kalman
 from algo.ukf import unscented_kalman
 from algo.pvb import projective_velocity_blending
-from algo.own import own_algo
+from algo.agb import own_algo
 from algo.rot import rate_turn
 
 from trials.zigzag import zigZagTrial
@@ -88,7 +88,7 @@ def plot_algo(algo="DR", config=[]):
     if algo == "PVB":
         aX, aY, aT, aE = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
-    if algo == "OWN":
+    if algo == "AGB":
         algo = f"AGB-{config[0]},{round(config[1], 2)}"
         aX, aY, aT, aE = own_algo(aisData, config)
         algoList.append(algo)
@@ -129,7 +129,7 @@ blendingPercentageList = np.arange(0, 1.01, 0.05)
 for interpolationType in interpolationTypeList:
     for blendingPercentage in blendingPercentageList:
         config = [interpolationType, blendingPercentage]
-        plot_algo("OWN", config)
+        plot_algo("AGB", config)
 
 legendList = ["True Path", "AIS Report"]
 legendList.extend(algoList)

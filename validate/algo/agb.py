@@ -1,7 +1,7 @@
 import math
 import numpy as np
-from .utils import calcTrajectoryError
-import matplotlib.pyplot as plt # For the course graph
+from .utils import calcTrajectoryError, wrapToPi
+import matplotlib.pyplot as plt  # For the course graph
 
 
 class AISReport:
@@ -445,21 +445,22 @@ def pickInterpType(aisReports, config):
     if len(aisReports) == 1:
         return P1(aisReports)
     elif len(aisReports) == 2:
-        if config[0]=="P2_Rot":
+        if config[0] == "P2_Rot":
             return P2_Rot(aisReports)
-        if config[0]=="P2_Quad":
+        if config[0] == "P2_Quad":
             return P2_Quad(aisReports)
-        if config[0]=="P2_Cubic":
+        if config[0] == "P2_Cubic":
             return P2_Cubic(aisReports)
         return P2_Rot(aisReports)
     elif len(aisReports) == 3:
-        if config[0]=="P3_Quad":
+        if config[0] == "P3_Quad":
             return P3_Quad(aisReports)
-        if config[0]=="P3_QuadCT":
+        if config[0] == "P3_QuadCT":
             return P3_Quad_CoordTransform(aisReports)
         return P3_Quad(aisReports)
     elif len(aisReports) == 4:
         return P4_Cubic(aisReports)
+
 
 def own_algo(aisData, config):
     estFreq = 60  # in Hertz
@@ -469,7 +470,7 @@ def own_algo(aisData, config):
     aY = []
     aT = []
     aE = []
-    aC = [] # Course
+    aC = []  # Course
     k = 0
     aisReports = []  # Max 3 reports
     vesselState = VesselState(0, 0, 0, 0)  # Store vessel state
@@ -503,7 +504,7 @@ def own_algo(aisData, config):
             stateOld = predictors[0].predict(h)
             stateNew = predictors[1].predict(h)
             # Blend between two
-            blendEnd = config[1] # 0.25
+            blendEnd = config[1]  # 0.5
             blendWeight = tSinceLastReport / (reportingTime * blendEnd)
             if blendWeight > 1 or blendEnd == 0:
                 blendWeight = 1
@@ -513,7 +514,8 @@ def own_algo(aisData, config):
                 stateOld.speed + (stateNew.speed - stateOld.speed) * blendWeight
             )
             courseFinal = (
-                stateOld.course + (stateNew.course - stateOld.course) * blendWeight
+                wrapToPi(stateOld.course)
+                + (wrapToPi(stateNew.course) - wrapToPi(stateOld.course)) * blendWeight
             )
             stateFinal = VesselState(posXFinal, posYFinal, speedFinal, courseFinal)
             # stateFinal = stateNew  # Override blending
