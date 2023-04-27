@@ -2,6 +2,11 @@ from pyais import decode
 from pprint import pprint
 import utils, export
 
+# For plotting only
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
+
 fileName = "data/2022-11-16.csv"
 
 lineN = 0
@@ -75,6 +80,8 @@ filteredAIS = utils.filter(AISMessages)
 # print(utils.approximateFlatX(testLon))
 # print(utils.approximateFlatY(testLat))
 
+# exit()
+
 vessels = utils.getVesselList(filteredAIS)
 
 
@@ -102,6 +109,8 @@ def getTrialRating(timeDiffList):
     return rating
 
 
+allTime = []
+
 for vessel in vessels:
     vesselMMSI = vessel
     vesselAISReports = utils.filter(filteredAIS, vesselFilter)
@@ -109,6 +118,8 @@ for vessel in vessels:
     for vesselAISReport in vesselAISReports:
         vesselAISReport["epoch_time"] = int(vesselAISReport["epoch_time"]) - startTime
     timeDiffList = utils.getTimeDifferenceList(vesselAISReports)
+    # timeDiffList.pop(0)
+    # allTime.extend(timeDiffList)
     avgReportingInterval = sum(timeDiffList) / len(timeDiffList)
     vesselReports[vesselMMSI] = vesselAISReports
     vesselTimeDiffList[vesselMMSI] = timeDiffList
@@ -117,6 +128,18 @@ for vessel in vessels:
 
 sortedVesselTrialRating = sorted(vesselTrialRating.items(), key=lambda x: x[1])
 pprint(sortedVesselTrialRating)
+
+# Histogram: Percentage of AIS Reporting Intervals
+# allTime = [item for item in allTime if item <= 30]
+# bins = [0, 5, 20, 30]
+# plt.hist(allTime, bins=bins, edgecolor="black", weights=np.ones(len(allTime)) / len(allTime))
+# plt.xticks(bins)
+# # plt.hist(allTime, bins=50)
+# # plt.xticks(np.arange(0.0, 30.1, 2.5))
+# plt.xlabel("Reporting Frequency (s)")
+# plt.ylabel("Percentage of AIS Reports")
+# plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+# plt.show()
 
 # References:
 # https://pyais.readthedocs.io/en/latest/messages.html
