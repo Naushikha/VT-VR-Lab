@@ -514,8 +514,11 @@ def own_algo(aisData, config):
                 stateOld.speed + (stateNew.speed - stateOld.speed) * blendWeight
             )
             courseFinal = (
-                wrapToPi(stateOld.course)
-                + (wrapToPi(stateNew.course) - wrapToPi(stateOld.course)) * blendWeight
+                math.remainder((stateOld.course + (2 * math.pi)), (2 * math.pi))
+                + math.remainder(
+                    (stateNew.course - stateOld.course + (2 * math.pi)), (2 * math.pi)
+                )
+                * blendWeight
             )
             stateFinal = VesselState(posXFinal, posYFinal, speedFinal, courseFinal)
             # stateFinal = stateNew  # Override blending
@@ -531,7 +534,7 @@ def own_algo(aisData, config):
             aT.append(t)
         tSinceLastReport += h
     # plt.figure(2)
-    # y = np.degrees(aC)
+    # y = np.degrees(aC) % 360
     # x = np.arange(len(aC))
     # plt.plot(x, y)
     # plt.figure(1)
