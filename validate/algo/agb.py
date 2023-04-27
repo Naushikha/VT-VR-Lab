@@ -504,9 +504,12 @@ def own_algo(aisData, config):
             stateOld = predictors[0].predict(h)
             stateNew = predictors[1].predict(h)
             # Blend between two
-            blendEnd = config[1]  # 0.5
-            blendWeight = tSinceLastReport / (reportingTime * blendEnd)
-            if blendWeight > 1 or blendEnd == 0:
+            blendPercentage = config[1]  # 0.5
+            if blendPercentage == 0:
+                blendWeight = 1
+            else:
+                blendWeight = tSinceLastReport / (reportingTime * blendPercentage)
+            if blendWeight > 1:
                 blendWeight = 1
             posXFinal = stateOld.posX + (stateNew.posX - stateOld.posX) * blendWeight
             posYFinal = stateOld.posY + (stateNew.posY - stateOld.posY) * blendWeight
