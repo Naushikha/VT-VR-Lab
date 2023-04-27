@@ -16,7 +16,8 @@ aisY = []  # in meters
 aisS = []  # in ms-1
 aisC = []  # in degrees
 
-trial = open("real/test2.csv", "r")
+# test1.vessel_636020811.octave test2.vessel_636018145.octave test3.vessel_417222444.octave
+trial = open("real/test1.vessel_636020811.octave.csv", "r")
 tZero = None
 for line in trial:
     epoch, mmsi, x, y, speed, course = line.strip().split(",")
@@ -165,7 +166,7 @@ legendList = ["AIS Report"]
 legendList.extend(algoList)
 
 legend = plt.legend(legendList, loc='center left', bbox_to_anchor=(1, 0.5))
-plt.title("AIS Vessel Motion Simulator")
+plt.title("AIS Vessel Motion Tracker")
 plt.xlabel("X-Axis (m)")
 plt.ylabel("Y-Axis (m)")
 plt.axis("scaled")
