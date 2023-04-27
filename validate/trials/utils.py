@@ -34,3 +34,35 @@ def getAISDataByDist(X, Y, dist):
                              2 + (X[i + 1] - X[i]) ** 2)
         tDist += fragDist
     return [X[len(X) - 1], Y[len(Y) - 1], getCourse(X[i - 1], Y[i - 1], X[i], Y[i])]
+
+
+def sim2unreal(aisData):
+    originLat = 6.955879
+    originLon = 79.844690
+    a = 6378137  # semi-minor axis (equatorial radius)
+    e = 0.0818  # Earth eccentricity (WGS-84)
+    commonDenom = math.sqrt(1 - e**2 * math.sin(originLat) ** 2)
+    RN = a / commonDenom
+    RM = RN * (1 - e**2) / commonDenom
+    def computeLon(x):
+        deltaLon = math.degrees(x * math.atan2(1, RN * math.cos(math.radians(originLat))))
+        lon =  deltaLon + originLon
+        return lon
+
+    def computeLat(y):
+        deltaLat = math.degrees(y * math.atan2(1, RM))
+        lon =  deltaLat + originLat
+        return lon
+
+    offsetX = 0 # + 10
+    offsetY = 0 + 300
+    
+    aisT, aisX, aisY, aisC, aisS = aisData["time"],aisData["x"],aisData["y"],aisData["course"],aisData["speed"]
+    unrealCSV = "ID,Timestamp,MMSI,Latitude,Longitude,Speed,Course,Heading"
+    for i in range(len(aisData["time"])):
+        speedFixed = round(aisS[i] * 1.94384) # ms-1 to knots
+        courseFixed = round(aisC[i])
+        latFixed = computeLat(aisY[i] + offsetY)
+        lonFixed = computeLon(aisX[i] + offsetX)
+        unrealCSV += f"\n{i},{aisT[i]},0,{latFixed},{lonFixed},{speedFixed},{courseFixed},{courseFixed}"
+    return unrealCSV

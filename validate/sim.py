@@ -12,8 +12,13 @@ from algo.rot import rate_turn
 from trials.zigzag import zigZagTrial
 from trials.circle import circleTrial
 
+from trials.utils import sim2unreal
+
 X, Y, T, aisData = zigZagTrial()
 # X, Y, T, aisData = circleTrial()
+
+# print(sim2unreal(aisData))
+# quit()
 
 fig, ax = plt.subplots(figsize=(14, 8))
 graphList = []
