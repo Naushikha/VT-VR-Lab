@@ -16,8 +16,8 @@ aisY = []  # in meters
 aisS = []  # in ms-1
 aisC = []  # in degrees
 
-# test1.vessel_636020811.octave test2.vessel_636018145.octave test3.vessel_417222444.octave
-trial = open("real/test1.vessel_636020811.octave.csv", "r")
+# test1.vessel_636018145.octave test2.vessel_636020811.octave test3.vessel_417222444.octave
+trial = open("real/test1.vessel_636018145.octave.csv", "r")
 tZero = None
 for line in trial:
     epoch, mmsi, x, y, speed, course = line.strip().split(",")
