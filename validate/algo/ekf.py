@@ -1,23 +1,24 @@
 import math
 import copy
 import numpy as np
-from .utils import computeFossenChi, wrapToPi, fixCourse
+from .utils import computeFossenChi, wrapToPi, fixCourse, rad2course
 from .utils import calcTrajectoryError
 
 
 def extended_kalman(aisData):
     # First make a copy of AIS data since we are modifying it
     aisData = copy.deepcopy(aisData)
-    estFreq = 60  # in Hertz
+    estFreq = 50  # in Hertz
     h = 1 / estFreq
     T = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []
     aT = []
     aE = []
+    aC = []
     k = 0
-    # aisData["course"] = computeFossenChi(aisData)  # in Radians
-    aisData["course"] = fixCourse(aisData)  # in Radians
+    aisData["course"] = computeFossenChi(aisData)  # in Radians
+    # aisData["course"] = fixCourse(aisData)  # in Radians
     # Initialization of EKF: X = [x y U chi]
     Q = np.diag([0.01, 0.01, 0.1, 0.1])
     R = np.diag([0.001, 0.001, 0.001, 0.01])
@@ -57,6 +58,7 @@ def extended_kalman(aisData):
         # Store simulation data: only x & y for plotting
         aX.append(X_prd.item(0))
         aY.append(X_prd.item(1))
+        aC.append(rad2course(math.pi - X_prd.item(3)))
         aT.append(t)
 
         # Predictor (k+1)
@@ -90,4 +92,4 @@ def extended_kalman(aisData):
         X_prd = X_hat + h * f_hat
         P_prd = PHI * P_hat * PHI.T + Q
 
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]

@@ -1,23 +1,24 @@
 import math
 import copy
 import numpy as np
-from .utils import computeFossenChi, wrapToPi, fixCourse
+from .utils import computeFossenChi, wrapToPi, fixCourse, rad2course
 from .utils import calcTrajectoryError
 
 
 def exogenous_kalman(aisData):
     # First make a copy of AIS data since we are modifying it
     aisData = copy.deepcopy(aisData)
-    estFreq = 60  # in Hertz
+    estFreq = 40  # in Hertz
     h = 1 / estFreq
     T = np.arange(0, aisData["duration"], h)
     aX = []
     aY = []
     aT = []
     aE = []
+    aC = []
     k = 0
-    # aisData["course"] = computeFossenChi(aisData)  # in Radians
-    aisData["course"] = fixCourse(aisData)  # in Radians
+    aisData["course"] = computeFossenChi(aisData)  # in Radians
+    # aisData["course"] = fixCourse(aisData)  # in Radians
 
     # Initialization of kinematic observer: x = [x y U chi]
 
@@ -55,11 +56,6 @@ def exogenous_kalman(aisData):
     H = np.eye(4)
 
     for t in T:
-
-        # Store simulation data: only x & y for plotting
-        aX.append(x_hat.item(0))
-        aY.append(x_hat.item(1))
-        aT.append(t)
 
         # Measurements
         if t >= aisData["time"][k]:
@@ -129,6 +125,12 @@ def exogenous_kalman(aisData):
 
             k += 1
 
+        # Store simulation data: only x & y for plotting
+        aX.append(x_hat.item(0))
+        aY.append(x_hat.item(1))
+        aC.append(rad2course(math.pi - chi_prd))
+        aT.append(t)
+        
         # Kalman filter model
         X_prd = np.matrix([x_prd, y_prd, U_prd, chi_prd]).T
         f_prd = np.matrix(
@@ -175,4 +177,4 @@ def exogenous_kalman(aisData):
         a = a + (a_c - a) / T_a
         r = r + (r_c - r) / T_r
 
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]

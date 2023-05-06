@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from .utils import calcTrajectoryError, wrapToPi
+from .utils import calcTrajectoryError, wrapToPi, rad2course
 import matplotlib.pyplot as plt  # For the course graph
 
 
@@ -360,12 +360,15 @@ class P3_Quad_CoordTransform:  # predicting with three AIS reports
         speedNext = self.state.speed  # no update to speed
         gradient = 2 * self.transQuadCoef[0] * posXNext + self.transQuadCoef[1]
         courseNext = math.atan(gradient)
+        fixedCourseNext = wrapToPi(
+            math.pi/2 - (math.atan(gradient) + math.radians(self.transAngle))
+        )
         transStateNext = VesselState(
             posXNext, posYNext, speedNext, courseNext
         )  # future state
         # transform back
         posXNext, posYNext = transformPoint([posXNext, posYNext], self.transAngle)
-        stateNext = VesselState(posXNext, posYNext, speedNext, courseNext)
+        stateNext = VesselState(posXNext, posYNext, speedNext, fixedCourseNext)
         self.transState = transStateNext  # advance state
         self.state = stateNext
         return self.state
@@ -533,12 +536,7 @@ def own_algo(aisData, config):
             # print(stateFinal.position)
             aX.append(stateFinal.posX)
             aY.append(stateFinal.posY)
-            aC.append(stateFinal.course)
+            aC.append(rad2course(stateFinal.course))
             aT.append(t)
         tSinceLastReport += h
-    # plt.figure(2)
-    # y = np.degrees(aC) % 360
-    # x = np.arange(len(aC))
-    # plt.plot(x, y)
-    # plt.figure(1)
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]

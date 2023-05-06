@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from .utils import calcTrajectoryError
+from .utils import calcTrajectoryError, rad2course
 
 
 def projective_velocity_blending(aisData):
@@ -11,6 +11,7 @@ def projective_velocity_blending(aisData):
     aY = []
     aT = []
     aE = []
+    aC = []
     posList = []  # all (x, y) positions
     k = 0
     lPos = np.array([0, 0])  # last known position
@@ -81,5 +82,6 @@ def projective_velocity_blending(aisData):
         aX.append(posComb[0])
         aY.append(posComb[1])
         aT.append(t)
+        aC.append(rad2course(math.atan2(bVelocity[0], bVelocity[1])))
 
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]

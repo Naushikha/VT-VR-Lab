@@ -3,7 +3,7 @@ import copy
 import numpy as np
 
 from .libUKF import UKF
-from .utils import course2Rad
+from .utils import course2Rad, rad2course
 from .utils import calcTrajectoryError
 
 
@@ -29,6 +29,7 @@ def unscented_kalman(aisData):
     aY = []
     aT = []
     aE = []
+    aC = []
     k = 0
     # x, y, course, speed, yaw rate , acceleration
     q = np.diag([0.01, 0.01, 0.1, 0.1, 0, 0])
@@ -76,5 +77,6 @@ def unscented_kalman(aisData):
         estiList = state_estimator.get_state()
         aX.append(estiList[0][0])
         aY.append(estiList[1][0])
+        aC.append(rad2course(estiList[2][0]))
         aT.append(t)
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]

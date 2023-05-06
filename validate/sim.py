@@ -66,29 +66,44 @@ def calcTeleportabilityScore(algo, aE):
     print(telepScore, end=",")
 
 
+def plotXYCGraphs(aX, aY, aC, aT):
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+
+    ax1.plot(aT, aX, color='red')
+    ax1.set_ylabel('x')
+
+    ax2.plot(aT, aY, color='green')
+    ax2.set_ylabel('y')
+
+    ax3.plot(aT, aC, color='blue')
+    ax3.set_xlabel('t')
+    ax3.set_ylabel('Course')
+    
+    plt.figure(1)
+
 def plot_algo(algo="DR", config=[]):
     startTime = time.time()
     if algo == "DR":
-        aX, aY, aT, aE = dead_reckoning(aisData)
+        aX, aY, aC, aT, aE = dead_reckoning(aisData)
         algoList.append("Dead Reckoning")
     if algo == "EKF":
-        aX, aY, aT, aE = extended_kalman(aisData)
+        aX, aY, aC, aT, aE = extended_kalman(aisData)
         algoList.append("Extended Kalman Filter")
     if algo == "XKF":
-        aX, aY, aT, aE = exogenous_kalman(aisData)
+        aX, aY, aC, aT, aE = exogenous_kalman(aisData)
         algoList.append("Exogenous Kalman Filter")
     if algo == "UKF":
-        aX, aY, aT, aE = unscented_kalman(aisData)
+        aX, aY, aC, aT, aE = unscented_kalman(aisData)
         algoList.append("Unscented Kalman Filter")
     if algo == "PVB":
-        aX, aY, aT, aE = projective_velocity_blending(aisData)
+        aX, aY, aC, aT, aE = projective_velocity_blending(aisData)
         algoList.append("Projective Velocity Blending")
     if algo == "AGB":
         algo = f"AGB-{config[0]},{round(config[1], 2)}"
-        aX, aY, aT, aE = own_algo(aisData, config)
+        aX, aY, aC, aT, aE = own_algo(aisData, config)
         algoList.append(algo)
     if algo == "ROT":
-        aX, aY, aT, aE = rate_turn(aisData)
+        aX, aY, aC, aT, aE = rate_turn(aisData)
         algoList.append("DR + Rate of Turn")
     endTime = time.time()
     print(algo, end=",")
@@ -98,7 +113,7 @@ def plot_algo(algo="DR", config=[]):
     calcTeleportabilityScore(algo, aE)
     algoTime = endTime - startTime
     print(algoTime)
-    # ALGONAME, RMSE, MAE, TELEPSCORE, TIME
+    plotXYCGraphs(aX, aY, aC, aT)
 
 
 (tmpGraph,) = ax.plot(X, Y)

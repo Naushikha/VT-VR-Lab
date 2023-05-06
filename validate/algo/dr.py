@@ -10,6 +10,7 @@ def dead_reckoning(aisData):
     aY = []
     aT = []
     aE = []
+    aC = []
     k = 0
     lSpeed = 0  # latest avail. speed
     lCourse = 0  # latest avail. course
@@ -23,9 +24,11 @@ def dead_reckoning(aisData):
             aT.append(t)
             lSpeed = aisData["speed"][k]
             lCourse = aisData["course"][k]
+            aC.append(lCourse)
             k += 1
         else:
             aX.append(aX[-1] + lSpeed * math.sin(math.radians(lCourse)) * (1 / estFreq))
             aY.append(aY[-1] + lSpeed * math.cos(math.radians(lCourse)) * (1 / estFreq))
+            aC.append(lCourse)
             aT.append(t)
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]

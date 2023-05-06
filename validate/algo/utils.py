@@ -37,6 +37,13 @@ def course2Rad(aisData):
     return correctedCourse
 
 
+def rad2course(a):
+    deg = math.degrees(a) % 360
+    if deg < 0:
+        deg += 360
+    return deg
+
+
 def calcTrajectoryError(errList, aX, aY, aisX, aisY):
     try:
         errX = abs(aX[-1] - aisX)

@@ -11,6 +11,7 @@ def rate_turn(aisData):
     aY = []
     aT = []
     aE = []
+    aC = []
     k = 0
     lSpeed = 0  # last known avail. speed
     lCourse = 0  # last known avail. course
@@ -31,6 +32,7 @@ def rate_turn(aisData):
             # print(aisData["x"][k], aisData["y"][k])
             lSpeed = aisData["speed"][k]
             lCourse = aisData["course"][k]
+            aC.append(lCourse)
             if not firstAIS:
                 try:
                     lRateOfTurn = (lCourse - pCourse) / tDelta
@@ -49,5 +51,6 @@ def rate_turn(aisData):
             + lSpeed * math.cos(math.radians(lCourse + lRateOfTurn * tSinceL)) * h
         )
         aT.append(t)
+        aC.append(lCourse + lRateOfTurn * tSinceL)
         tSinceL += h
-    return [aX, aY, aT, aE]
+    return [aX, aY, aC, aT, aE]
