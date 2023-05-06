@@ -66,20 +66,34 @@ def calcTeleportabilityScore(algo, aE):
     print(telepScore, end=",")
 
 
+def calcSmoothingScore(algo, aX, aY):
+    distSum = 0
+    n = len(aX)
+
+    for i in range(n - 1):
+        xDiff = aX[i + 1] - aX[i]
+        yDiff = aY[i + 1] - aY[i]
+        dist = math.sqrt(xDiff**2 + yDiff**2)
+        distSum += dist
+    smoothScore = (n - 1) / distSum
+    print(smoothScore, end=",")
+
+
 def plotXYCGraphs(aX, aY, aC, aT):
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
 
-    ax1.plot(aT, aX, color='red')
-    ax1.set_ylabel('x')
+    ax1.plot(aT, aX, color="red")
+    ax1.set_ylabel("x")
 
-    ax2.plot(aT, aY, color='green')
-    ax2.set_ylabel('y')
+    ax2.plot(aT, aY, color="green")
+    ax2.set_ylabel("y")
 
-    ax3.plot(aT, aC, color='blue')
-    ax3.set_xlabel('t')
-    ax3.set_ylabel('Course')
-    
+    ax3.plot(aT, aC, color="blue")
+    ax3.set_xlabel("t")
+    ax3.set_ylabel("Course")
+
     plt.figure(1)
+
 
 def plot_algo(algo="DR", config=[]):
     startTime = time.time()
@@ -111,9 +125,11 @@ def plot_algo(algo="DR", config=[]):
     graphList.append(tmpGraph)
     calcAccuracy(algo, aX, aY, aT)
     calcTeleportabilityScore(algo, aE)
+    calcSmoothingScore(algo, aX, aY)
     algoTime = endTime - startTime
     print(algoTime)
     plotXYCGraphs(aX, aY, aC, aT)
+    # ALGONAME, RMSE, MAE, TELEPSCORE, SMOOTHSCORE, TIME
 
 
 (tmpGraph,) = ax.plot(X, Y)
