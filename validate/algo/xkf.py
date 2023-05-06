@@ -128,7 +128,7 @@ def exogenous_kalman(aisData):
         # Store simulation data: only x & y for plotting
         aX.append(x_hat.item(0))
         aY.append(x_hat.item(1))
-        aC.append(rad2course(math.pi - chi_prd))
+        aC.append(rad2course(math.pi/2 - chi_prd))
         aT.append(t)
         
         # Kalman filter model

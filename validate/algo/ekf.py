@@ -58,7 +58,7 @@ def extended_kalman(aisData):
         # Store simulation data: only x & y for plotting
         aX.append(X_prd.item(0))
         aY.append(X_prd.item(1))
-        aC.append(rad2course(math.pi - X_prd.item(3)))
+        aC.append(rad2course(math.pi / 2 - X_prd.item(3)))
         aT.append(t)
 
         # Predictor (k+1)
