@@ -43,7 +43,10 @@ def calcAccuracy(algo, aX, aY, aT):
         aE.append((abs(algoX - X[i]) + abs(algoY - Y[i])) / 2)
     plt.figure(3)
     x = np.arange(len(aE))
+    # Plot E-T Graph
     plt.plot(x, aE, label=algo)
+    plt.xlabel("t (frames)")
+    plt.ylabel("Absolute Error")
     plt.legend(algoList)
     plt.figure(1)
     X_MAE = XsumOfDiff / len(T)
